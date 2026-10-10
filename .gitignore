@@ -1,0 +1,41 @@
+# Gradle & Java build artifacts
+.gradle/
+**/.gradle/
+build/
+**/build/
+!src/**/build/
+*.jar
+*.war
+*.class
+*.log
+out.log
+err.log
+backend/out.log
+backend/err.log
+
+# Node & Angular
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.angular/
+**/.angular/
+
+# Environment, Secrets & Local Configs
+.env
+**/.env
+!.env.example
+!**/.env.example
+application-local.yml
+**/application-local.yml
+
+# IDE & Editor files
+.idea/
+**/.idea/
+*.iml
+.vscode/
+**/.vscode/
+
+# OS metadata
+.DS_Store
+Thumbs.db

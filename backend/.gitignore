@@ -1,0 +1,11 @@
+.gradle/
+build/
+*.jar
+*.war
+*.class
+*.log
+.env
+!.env.example
+application-local.yml
+out.log
+err.log
