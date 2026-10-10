@@ -170,15 +170,15 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
               <div class="flex items-center justify-between">
                 <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1">
                   <span class="material-symbols-outlined text-[15px] text-primary">calendar_month</span>
-                  Période (Aujourd'hui par défaut)
+                  Période
                 </span>
                 <button
                   *ngIf="dateDebut || dateFin"
                   type="button"
                   (click)="reinitialiserDates()"
                   class="text-[10px] text-primary hover:underline font-semibold flex items-center gap-0.5">
-                  <span class="material-symbols-outlined text-[13px]">history</span>
-                  Toutes les dates
+                  <span class="material-symbols-outlined text-[13px]">close</span>
+                  Effacer
                 </button>
               </div>
 
@@ -202,7 +202,7 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
               </div>
             </div>
 
-            <!-- Total Metrics Card (Recalculé dynamiquement selon la période, l'année et le motif sélectionnés) -->
+            <!-- Total Metrics Card -->
             <div class="grid grid-cols-2 gap-2">
               <div class="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 flex flex-col justify-between">
                 <div>
@@ -214,7 +214,7 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
                   </div>
                 </div>
                 <span class="text-[10px] text-on-surface-variant/70 mt-1">
-                  {{ dateDebut === dateFin && dateDebut ? "Pour aujourd'hui" : (dateDebut ? 'Sur la période' : 'Historique complet') }}
+                  {{ (dateDebut || dateFin) ? 'Sur la période' : 'Historique complet' }}
                 </span>
               </div>
 
@@ -247,44 +247,11 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
               </div>
             </div>
 
-            <!-- Filtres combinés: Année, Motif & Pupitre -->
+            <!-- Filtres combinés: Motif & Pupitre -->
             <div class="flex flex-col gap-2.5 bg-surface-container-low/70 p-3 rounded-xl border border-outline-variant/25">
 
-              <!-- 1. Filtre par Année / Campagne (ex: 2026 vs 2025) -->
+              <!-- 1. Filtre par Motif -->
               <div class="flex flex-col gap-1">
-                <div class="flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1">
-                    <span class="material-symbols-outlined text-[15px] text-primary">event</span>
-                    Année / Campagne
-                  </span>
-                  <span
-                    *ngIf="anneeActive !== 'TOUTES'"
-                    (click)="filtrerAnnee('TOUTES')"
-                    class="text-[10px] text-primary font-semibold cursor-pointer hover:underline">
-                    Toutes les années
-                  </span>
-                </div>
-                <div class="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
-                  <button
-                    type="button"
-                    (click)="filtrerAnnee('TOUTES')"
-                    [ngClass]="anneeActive === 'TOUTES' ? 'bg-primary text-on-primary font-bold shadow-sm' : 'bg-surface-container text-on-surface-variant font-medium'"
-                    class="px-2.5 py-1 rounded-full text-xs shrink-0 transition-all">
-                    Toutes les années
-                  </button>
-                  <button
-                    *ngFor="let a of anneesDisponibles"
-                    type="button"
-                    (click)="filtrerAnnee(a)"
-                    [ngClass]="anneeActive === a ? 'bg-primary text-on-primary font-bold shadow-sm' : 'bg-surface-container text-on-surface-variant font-medium'"
-                    class="px-2.5 py-1 rounded-full text-xs shrink-0 transition-all">
-                    {{ a }}
-                  </button>
-                </div>
-              </div>
-
-              <!-- 2. Filtre par Motif -->
-              <div class="flex flex-col gap-1 pt-1.5 border-t border-outline-variant/15">
                 <div class="flex items-center justify-between">
                   <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1">
                     <span class="material-symbols-outlined text-[15px] text-primary">sell</span>
@@ -605,9 +572,7 @@ export class TresorerieModalComponent implements OnInit, OnDestroy {
         v.motif === this.motifActif ||
         (v.motifLibelle && v.motifLibelle.toLowerCase().includes(this.motifActif.toLowerCase()));
 
-      const matchAnnee = this.anneeActive === 'TOUTES' || v.annee === this.anneeActive;
-
-      return matchPupitre && matchMotif && matchAnnee;
+      return matchPupitre && matchMotif;
     });
   }
 

@@ -26,6 +26,88 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
         </a>
       </div>
 
+      <!-- Filtre Période -->
+      <div class="bg-surface-container-low/80 p-3 rounded-2xl border border-outline-variant/30 flex flex-col gap-2 mb-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-on-surface uppercase tracking-wider flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px] text-primary">calendar_month</span>
+            Période
+          </span>
+          <button
+            *ngIf="dateDebut || dateFin"
+            type="button"
+            (click)="effacerPeriode()"
+            class="text-[11px] text-primary hover:underline font-semibold flex items-center gap-0.5">
+            <span class="material-symbols-outlined text-[14px]">close</span>
+            Effacer
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="text-[10px] text-on-surface-variant font-semibold block mb-0.5">Date début</label>
+            <input
+              type="date"
+              [(ngModel)]="dateDebut"
+              (change)="onChangementDate()"
+              class="w-full px-2.5 py-1.5 rounded-xl bg-surface-container-lowest border border-outline-variant/40 focus:border-primary focus:outline-none text-xs text-on-surface font-medium">
+          </div>
+          <div>
+            <label class="text-[10px] text-on-surface-variant font-semibold block mb-0.5">Date fin</label>
+            <input
+              type="date"
+              [(ngModel)]="dateFin"
+              (change)="onChangementDate()"
+              class="w-full px-2.5 py-1.5 rounded-xl bg-surface-container-lowest border border-outline-variant/40 focus:border-primary focus:outline-none text-xs text-on-surface font-medium">
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Metrics Card -->
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <div class="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 flex flex-col justify-between">
+          <div>
+            <span class="text-[11px] text-on-surface-variant font-medium">
+              Total Collecté {{ motifActif !== 'TOUS' ? '(' + getLibelleMotifActif() + ')' : '' }}
+            </span>
+            <div class="text-xl font-extrabold text-primary mt-0.5">
+              {{ totalCollecteFiltre | number }} F
+            </div>
+          </div>
+          <span class="text-[10px] text-on-surface-variant/70 mt-1">
+            {{ (dateDebut || dateFin) ? 'Sur la période' : 'Historique complet' }}
+          </span>
+        </div>
+
+        <div class="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 flex flex-col justify-between">
+          <div>
+            <span class="text-[11px] text-on-surface-variant font-medium">Versements Validés</span>
+            <div class="text-xl font-extrabold text-secondary mt-0.5">
+              {{ nbVersementsValidesFiltres }} / {{ versementsFiltres.length }}
+            </div>
+          </div>
+          <span class="text-[10px] text-emerald-700 font-semibold mt-1 flex items-center gap-0.5">
+            <span class="material-symbols-outlined text-[12px]">verified</span>
+            Paiements confirmés
+          </span>
+        </div>
+      </div>
+
+      <!-- Répartition du total collecté par motif -->
+      <div *ngIf="motifActif === 'TOUS' && totalParMotifFiltres.length > 0" class="flex flex-col gap-1.5 p-2.5 mb-3 bg-surface-container-low/60 rounded-xl border border-outline-variant/20">
+        <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
+          Total collecté par motif :
+        </span>
+        <div class="flex flex-wrap gap-1.5">
+          <div
+            *ngFor="let item of totalParMotifFiltres"
+            class="px-2 py-1 rounded-lg bg-surface-container text-xs flex items-center gap-1.5 border border-outline-variant/20">
+            <span class="font-medium text-on-surface-variant text-[11px]">{{ item.libelle }}:</span>
+            <span class="font-bold text-primary text-[11px]">{{ item.total | number }} F</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Filtres Combinés: Motif & Pupitre -->
       <div class="flex flex-col gap-2 mb-3 bg-surface-container-low/60 p-2.5 rounded-xl border border-outline-variant/20">
         <!-- 1. Filtre par motif -->
@@ -75,8 +157,15 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
 
       <div *ngIf="!chargement && versementsFiltres.length === 0" class="bg-surface-container-low rounded-2xl p-8 text-center flex flex-col items-center gap-2">
         <span class="material-symbols-outlined text-4xl text-outline">receipt_long</span>
-        <p class="text-sm font-semibold text-on-surface">Aucune cotisation trouvée pour ce filtre</p>
-        <p class="text-xs text-on-surface-variant">Effectuez un versement express depuis l'accueil.</p>
+        <p class="text-sm font-semibold text-on-surface">Aucune cotisation trouvée pour ces critères</p>
+        <p class="text-xs text-on-surface-variant">Modifiez la période ou effectuez un versement express.</p>
+        <button
+          *ngIf="dateDebut || dateFin"
+          type="button"
+          (click)="effacerPeriode()"
+          class="mt-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-all">
+          Voir tout l'historique
+        </button>
       </div>
 
       <div *ngIf="!chargement && versementsFiltres.length > 0" class="flex flex-col gap-2.5">
@@ -93,7 +182,8 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
               <div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
                 <span class="px-1.5 py-0.2 rounded bg-surface-container text-[10px] font-bold">{{ v.pupitreLibelle || v.pupitre }}</span>
                 <span>•</span>
-                <span class="text-[11px] font-semibold text-secondary truncate">{{ v.campagne || (v.motifLibelle || v.motif) + ' (' + (v.annee || 2026) + ')' }}</span>
+                <span class="text-[11px] font-semibold text-secondary truncate">{{ v.motifLibelle || v.motif }}</span>
+                <span *ngIf="v.dateCreation" class="text-[10px] text-outline">• {{ v.dateCreation | date:'dd/MM' }}</span>
               </div>
             </div>
           </div>
@@ -132,6 +222,9 @@ export class CotisationsComponent implements OnInit {
   pupitreActif: string = 'TOUS';
   motifActif: string = 'TOUS';
   recuSelectionne: Versement | null = null;
+
+  dateDebut: string = '';
+  dateFin: string = '';
 
   readonly pupitres = ['Soprano', 'Alto', 'Ténor', 'Basse', 'Ami / Bienfaiteur'];
 
@@ -194,7 +287,51 @@ export class CotisationsComponent implements OnInit {
     this.appliquerFiltre();
   }
 
-  private appliquerFiltre(): void {
+  onChangementDate(): void {
+    this.appliquerFiltre();
+  }
+
+  effacerPeriode(): void {
+    this.dateDebut = '';
+    this.dateFin = '';
+    this.appliquerFiltre();
+  }
+
+  getLibelleMotifActif(): string {
+    const item = this.motifsDisponibles.find(m => m.code === this.motifActif);
+    return item ? item.libelle : this.motifActif;
+  }
+
+  get totalCollecteFiltre(): number {
+    return this.versementsFiltres
+      .filter(v => v.statut === 'VALIDE')
+      .reduce((sum, v) => sum + (v.montant || 0), 0);
+  }
+
+  get nbVersementsValidesFiltres(): number {
+    return this.versementsFiltres.filter(v => v.statut === 'VALIDE').length;
+  }
+
+  get totalParMotifFiltres(): { code: string; libelle: string; total: number }[] {
+    const totals = new Map<string, number>();
+    this.versementsFiltres
+      .filter(v => v.statut === 'VALIDE')
+      .forEach(v => {
+        const key = v.motif || 'AUTRE';
+        totals.set(key, (totals.get(key) || 0) + (v.montant || 0));
+      });
+
+    return Array.from(totals.entries()).map(([code, total]) => {
+      const info = this.motifsDisponibles.find(m => m.code === code);
+      return {
+        code,
+        libelle: info ? info.libelle : code,
+        total
+      };
+    }).sort((a, b) => b.total - a.total);
+  }
+
+  appliquerFiltre(): void {
     this.versementsFiltres = this.versements.filter(v => {
       const matchPupitre = this.pupitreActif === 'TOUS' ||
         (v.pupitreLibelle && v.pupitreLibelle.toLowerCase().includes(this.pupitreActif.toLowerCase())) ||
@@ -205,7 +342,15 @@ export class CotisationsComponent implements OnInit {
         v.motif === this.motifActif ||
         (v.motifLibelle && v.motifLibelle.toLowerCase().includes(this.motifActif.toLowerCase()));
 
-      return matchPupitre && matchMotif;
+      let matchDate = true;
+      if (this.dateDebut && v.dateCreation) {
+        if (v.dateCreation.substring(0, 10) < this.dateDebut) matchDate = false;
+      }
+      if (this.dateFin && v.dateCreation) {
+        if (v.dateCreation.substring(0, 10) > this.dateFin) matchDate = false;
+      }
+
+      return matchPupitre && matchMotif && matchDate;
     });
   }
 

@@ -52,9 +52,9 @@ import { VersementService } from '../../../core/services/versement.service';
           </div>
 
           <div class="flex justify-between items-center">
-            <span class="text-on-surface-variant text-xs">Motif &amp; Campagne</span>
+            <span class="text-on-surface-variant text-xs">Motif</span>
             <span class="font-medium text-on-surface text-right">
-              {{ versement.campagne || (versement.motifLibelle + ' (' + (versement.annee || 2026) + ')') }}
+              {{ versement.motifLibelle || versement.motif }}
             </span>
           </div>
 
