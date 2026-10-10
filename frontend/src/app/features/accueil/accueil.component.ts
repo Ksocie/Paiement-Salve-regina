@@ -143,10 +143,7 @@ import { TresorerieModalComponent } from '../tresorerie/tresorerie-modal.compone
 
         <!-- Phone Number Mobile Money Input -->
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-semibold text-on-surface flex items-center justify-between" for="donor-phone">
-            <span>Numéro Mobile Money <strong class="text-rose-600 font-bold">* (Obligatoire)</strong></span>
-            <span class="text-[10px] text-on-surface-variant">Wave, Orange, MTN, Moov</span>
-          </label>
+          <label class="text-xs font-semibold text-on-surface" for="donor-phone">Numéro Mobile Money</label>
           <div class="flex items-center gap-2 bg-surface-container-low rounded-xl px-3 py-2 border transition-all"
                [ngClass]="numeroInvalide ? 'border-rose-500 bg-rose-50/30' : 'border-transparent focus-within:border-primary focus-within:bg-surface-container-lowest'">
             <span class="text-xs font-bold text-on-surface-variant shrink-0">+225</span>
