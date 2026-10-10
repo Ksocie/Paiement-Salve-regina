@@ -66,7 +66,7 @@ L'API de paiement réutilise et optimise l'intégration existante de `miracleapp
 
 ### 1. Lancer le Backend (Spring Boot)
 ```bash
-cd c:\francois\miracleapp\salve-regina-pwa\backend
+cd c:\salve-regina-pwa\backend
 .\gradlew bootRun
 ```
 - L'API démarre sur le port **`8082`**.
@@ -75,7 +75,7 @@ cd c:\francois\miracleapp\salve-regina-pwa\backend
 
 ### 2. Lancer le Frontend (Angular PWA)
 ```bash
-cd c:\francois\miracleapp\salve-regina-pwa\frontend
+cd c:\salve-regina-pwa\frontend
 npm start
 ```
 - L'application est disponible sur : **`http://localhost:4200`**
