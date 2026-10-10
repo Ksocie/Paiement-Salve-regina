@@ -32,6 +32,7 @@ import java.time.Instant;
                 @Index(name = "idx_versement_ref", columnList = "reference", unique = true),
                 @Index(name = "idx_versement_ref_passerelle", columnList = "reference_passerelle"),
                 @Index(name = "idx_versement_pupitre", columnList = "pupitre"),
+                @Index(name = "idx_versement_annee", columnList = "annee"),
                 @Index(name = "idx_versement_statut", columnList = "statut"),
                 @Index(name = "idx_versement_date_creation", columnList = "date_creation")
         }
@@ -66,6 +67,13 @@ public class VersementEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private MotifVersement motif;
+
+    @Column(name = "annee", nullable = false)
+    @Builder.Default
+    private Integer annee = 2026;
+
+    @Column(name = "campagne", length = 120)
+    private String campagne;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal montant;

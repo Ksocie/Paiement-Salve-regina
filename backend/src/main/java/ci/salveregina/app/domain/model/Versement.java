@@ -19,6 +19,8 @@ public class Versement {
     private final String email;
     private final Pupitre pupitre;
     private final MotifVersement motif;
+    private final Integer annee;
+    private final String campagne;
     private final BigDecimal montant;
     private final OperateurPaiement operateur;
     private StatutVersement statut;
@@ -36,6 +38,8 @@ public class Versement {
         this.email = builder.email;
         this.pupitre = builder.pupitre != null ? builder.pupitre : Pupitre.AUTRE;
         this.motif = builder.motif != null ? builder.motif : MotifVersement.COTISATION;
+        this.annee = builder.annee != null ? builder.annee : 2026;
+        this.campagne = builder.campagne;
         this.montant = Objects.requireNonNull(builder.montant, "Le montant est obligatoire");
         this.operateur = builder.operateur != null ? builder.operateur : OperateurPaiement.WAVE;
         this.statut = builder.statut != null ? builder.statut : StatutVersement.EN_ATTENTE;
@@ -94,6 +98,8 @@ public class Versement {
     public String getEmail() { return email; }
     public Pupitre getPupitre() { return pupitre; }
     public MotifVersement getMotif() { return motif; }
+    public Integer getAnnee() { return annee; }
+    public String getCampagne() { return campagne; }
     public BigDecimal getMontant() { return montant; }
     public OperateurPaiement getOperateur() { return operateur; }
     public StatutVersement getStatut() { return statut; }
@@ -115,6 +121,8 @@ public class Versement {
         private String email;
         private Pupitre pupitre;
         private MotifVersement motif;
+        private Integer annee;
+        private String campagne;
         private BigDecimal montant;
         private OperateurPaiement operateur;
         private StatutVersement statut;
@@ -131,6 +139,8 @@ public class Versement {
         public Builder email(String email) { this.email = email; return this; }
         public Builder pupitre(Pupitre pupitre) { this.pupitre = pupitre; return this; }
         public Builder motif(MotifVersement motif) { this.motif = motif; return this; }
+        public Builder annee(Integer annee) { this.annee = annee; return this; }
+        public Builder campagne(String campagne) { this.campagne = campagne; return this; }
         public Builder montant(BigDecimal montant) { this.montant = montant; return this; }
         public Builder operateur(OperateurPaiement operateur) { this.operateur = operateur; return this; }
         public Builder statut(StatutVersement statut) { this.statut = statut; return this; }

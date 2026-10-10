@@ -26,6 +26,10 @@ public record CreerVersementDto(
 
         MotifVersement motif,
 
+        Integer annee,
+
+        String campagne,
+
         @NotNull(message = "Le montant est obligatoire")
         @DecimalMin(value = "200", message = "Le montant minimum est de 200 FCFA pour Mobile Money")
         BigDecimal montant,
@@ -41,6 +45,8 @@ public record CreerVersementDto(
                 email,
                 pupitre != null ? pupitre : Pupitre.AUTRE,
                 motif != null ? motif : MotifVersement.COTISATION,
+                annee != null ? annee : 2026,
+                campagne,
                 montant,
                 operateur != null ? operateur : OperateurPaiement.WAVE,
                 commentaire

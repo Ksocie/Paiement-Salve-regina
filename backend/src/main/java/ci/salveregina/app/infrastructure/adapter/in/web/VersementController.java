@@ -95,13 +95,32 @@ public class VersementController {
             @RequestHeader(value = "X-Tresorerie-PIN", required = false) String pin,
             @RequestParam(required = false) Pupitre pupitre,
             @RequestParam(required = false) MotifVersement motif,
-            @RequestParam(required = false) StatutVersement statut
+            @RequestParam(required = false) StatutVersement statut,
+            @RequestParam(required = false) Integer annee,
+            @RequestParam(required = false) String dateDebut,
+            @RequestParam(required = false) String dateFin
     ) {
         if (!estPinValide(pin)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("erreur", "Accès refusé", "message", "Code PIN de trésorerie requis"));
         }
-        List<VersementDto> list = consulterUseCase.listerVersements(pupitre, motif, statut)
+        java.time.Instant debutInstant = null;
+        java.time.Instant finInstant = null;
+        if (dateDebut != null && !dateDebut.isBlank()) {
+            try {
+                debutInstant = java.time.LocalDate.parse(dateDebut.trim())
+                        .atStartOfDay(java.time.ZoneId.systemDefault()).toInstant();
+            } catch (Exception ignored) {}
+        }
+        if (dateFin != null && !dateFin.isBlank()) {
+            try {
+                finInstant = java.time.LocalDate.parse(dateFin.trim())
+                        .atTime(23, 59, 59, 999_999_999)
+                        .atZone(java.time.ZoneId.systemDefault()).toInstant();
+            } catch (Exception ignored) {}
+        }
+
+        List<VersementDto> list = consulterUseCase.listerVersements(pupitre, motif, statut, annee, debutInstant, finInstant)
                 .stream()
                 .map(VersementDto::depuisDomaine)
                 .toList();

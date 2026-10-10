@@ -23,5 +23,9 @@ public interface VersementPersistencePort {
 
     List<Versement> rechercher(Pupitre pupitre, MotifVersement motif, StatutVersement statut);
 
+    List<Versement> rechercher(Pupitre pupitre, MotifVersement motif, StatutVersement statut, Integer annee, java.time.Instant dateDebut, java.time.Instant dateFin);
+
+    int annulerVersementsExpires(java.time.Instant dateLimite);
+
     StatistiquesVersement calculerStatistiques();
 }

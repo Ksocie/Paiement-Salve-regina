@@ -1,6 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { PwaService } from '../../core/services/pwa.service';
 import { VersementService } from '../../core/services/versement.service';
 import { CreerVersementDto, MotifVersement, OperateurPaiement, Pupitre, Versement } from '../../core/models/versement.model';
@@ -109,6 +110,27 @@ import { TresorerieModalComponent } from '../tresorerie/tresorerie-modal.compone
               <span class="material-symbols-outlined text-[16px]">{{ m.icon }}</span>
               <span>{{ m.libelle }}</span>
             </button>
+          </div>
+
+          <!-- Année concernée par la cotisation / le projet -->
+          <div class="flex items-center justify-between pt-1.5">
+            <span class="text-[11px] font-semibold text-on-surface-variant">Année concernée :</span>
+            <div class="flex items-center gap-1.5">
+              <button
+                type="button"
+                (click)="anneeSelectionnee = 2026"
+                [ngClass]="anneeSelectionnee === 2026 ? 'bg-primary text-on-primary font-bold shadow-sm' : 'bg-surface-container text-on-surface-variant font-medium hover:bg-surface-container-high'"
+                class="px-2.5 py-0.5 rounded-full text-xs transition-all active:scale-95">
+                2026 (En cours)
+              </button>
+              <button
+                type="button"
+                (click)="anneeSelectionnee = 2025"
+                [ngClass]="anneeSelectionnee === 2025 ? 'bg-primary text-on-primary font-bold shadow-sm' : 'bg-surface-container text-on-surface-variant font-medium hover:bg-surface-container-high'"
+                class="px-2.5 py-0.5 rounded-full text-xs transition-all active:scale-95">
+                2025 (Rattrapage)
+              </button>
+            </div>
           </div>
         </div>
 
@@ -271,15 +293,29 @@ import { TresorerieModalComponent } from '../tresorerie/tresorerie-modal.compone
     </div>
   `
 })
-export class AccueilComponent {
+export class AccueilComponent implements OnInit {
   readonly pwaService = inject(PwaService);
   private readonly versementService = inject(VersementService);
   private readonly qrModalService = inject(QrModalService);
+  private readonly route = inject(ActivatedRoute);
 
   showPwaBanner = true;
   enCours = false;
   afficherTresorerieModal = false;
   recuAffiche: Versement | null = null;
+  anneeSelectionnee = 2026;
+
+  ngOnInit(): void {
+    const qp = this.route.snapshot.queryParams;
+    const ref = qp['reference'] || qp['ref'] || qp['order_id'] || qp['versementRef'] || qp['simulated_ref'];
+    if (ref) {
+      this.versementService.obtenirParReference(ref).subscribe({
+        next: (v) => {
+          if (v) this.recuAffiche = v;
+        }
+      });
+    }
+  }
 
   ouvrirQrModal(): void {
     this.qrModalService.open();
@@ -364,14 +400,19 @@ export class AccueilComponent {
       return;
     }
 
+    const libelleMotif = this.motifs.find(m => m.valeur === this.motifSelectionne)?.libelle || this.motifSelectionne;
+    const campagneNom = `${libelleMotif} ${this.anneeSelectionnee}`;
+
     const payload: CreerVersementDto = {
       nomDonateur: nom,
       telephone: tel,
       pupitre: this.pupitreSelectionne,
       motif: this.motifSelectionne,
+      annee: this.anneeSelectionnee,
+      campagne: campagneNom,
       montant: montantFinal,
       operateur: this.operateurSelectionne,
-      commentaire: `Versement via PWA mobile pour la Chorale Salve Regina`
+      commentaire: `Versement ${campagneNom} via PWA mobile pour la Chorale Salve Regina`
     };
 
     this.enCours = true;

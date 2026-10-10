@@ -68,6 +68,8 @@ public class VersementService implements
                 .email(commande.email())
                 .pupitre(commande.pupitre())
                 .motif(commande.motif())
+                .annee(commande.annee() != null ? commande.annee() : 2026)
+                .campagne(commande.campagne())
                 .montant(commande.montant())
                 .operateur(commande.operateur())
                 .statut(StatutVersement.EN_ATTENTE)
@@ -100,6 +102,16 @@ public class VersementService implements
         return versement;
     }
 
+    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 60000)
+    @Transactional
+    public void annulerVersementsExpiresAutomatique() {
+        Instant limite = Instant.now().minus(java.time.Duration.ofMinutes(5));
+        int nbAnnules = persistencePort.annulerVersementsExpires(limite);
+        if (nbAnnules > 0) {
+            log.info("Nettoyage automatique: {} versement(s) en attente depuis plus de 5 minutes ont été annulés.", nbAnnules);
+        }
+    }
+
     @Override
     @Transactional(readOnly = true)
     public Versement obtenirParReference(String reference) {
@@ -108,18 +120,27 @@ public class VersementService implements
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<Versement> listerVersements(Pupitre pupitre, MotifVersement motif, StatutVersement statut) {
-        return persistencePort.rechercher(pupitre, motif, statut);
+        return listerVersements(pupitre, motif, statut, null, null, null);
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
+    public List<Versement> listerVersements(Pupitre pupitre, MotifVersement motif, StatutVersement statut, Integer annee, Instant dateDebut, Instant dateFin) {
+        persistencePort.annulerVersementsExpires(Instant.now().minus(java.time.Duration.ofMinutes(5)));
+        return persistencePort.rechercher(pupitre, motif, statut, annee, dateDebut, dateFin);
+    }
+
+    @Override
+    @Transactional
     public StatistiquesVersement obtenirStatistiques() {
+        persistencePort.annulerVersementsExpires(Instant.now().minus(java.time.Duration.ofMinutes(5)));
         return persistencePort.calculerStatistiques();
     }
 
     @Override
+    @Transactional
     public Versement verifierEtMettreAJour(String reference) {
         Versement versement = obtenirParReference(reference);
         if (versement.estPaye()) {
@@ -131,6 +152,11 @@ public class VersementService implements
             if (statutPasserelle.isPresent()) {
                 appliquerMiseAJourStatut(versement, statutPasserelle.get());
                 versement = persistencePort.sauvegarder(versement);
+            } else if (versement.getStatut() == StatutVersement.EN_ATTENTE &&
+                    versement.getDateCreation().isBefore(Instant.now().minus(java.time.Duration.ofMinutes(5)))) {
+                versement.marquerCommeAnnule();
+                versement = persistencePort.sauvegarder(versement);
+                log.info("Versement ref={} expiré après 5 minutes sans validation passerelle -> ANNULE", versement.getReference());
             }
         }
         return versement;

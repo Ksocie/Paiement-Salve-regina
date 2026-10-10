@@ -50,10 +50,21 @@ public class VersementPersistenceAdapter implements VersementPersistencePort {
 
     @Override
     public List<Versement> rechercher(Pupitre pupitre, MotifVersement motif, StatutVersement statut) {
-        return repository.rechercher(pupitre, motif, statut)
+        return rechercher(pupitre, motif, statut, null, null, null);
+    }
+
+    @Override
+    public List<Versement> rechercher(Pupitre pupitre, MotifVersement motif, StatutVersement statut, Integer annee, java.time.Instant dateDebut, java.time.Instant dateFin) {
+        return repository.rechercher(pupitre, motif, statut, annee, dateDebut, dateFin)
                 .stream()
                 .map(this::versDomaine)
                 .toList();
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public int annulerVersementsExpires(java.time.Instant dateLimite) {
+        return repository.annulerVersementsExpires(dateLimite);
     }
 
     @Override
@@ -123,6 +134,8 @@ public class VersementPersistenceAdapter implements VersementPersistencePort {
                 .email(dom.getEmail())
                 .pupitre(dom.getPupitre())
                 .motif(dom.getMotif())
+                .annee(dom.getAnnee() != null ? dom.getAnnee() : 2026)
+                .campagne(dom.getCampagne())
                 .montant(dom.getMontant())
                 .operateur(dom.getOperateur())
                 .statut(dom.getStatut())
@@ -143,6 +156,8 @@ public class VersementPersistenceAdapter implements VersementPersistencePort {
                 .email(entity.getEmail())
                 .pupitre(entity.getPupitre())
                 .motif(entity.getMotif())
+                .annee(entity.getAnnee() != null ? entity.getAnnee() : 2026)
+                .campagne(entity.getCampagne())
                 .montant(entity.getMontant())
                 .operateur(entity.getOperateur())
                 .statut(entity.getStatut())

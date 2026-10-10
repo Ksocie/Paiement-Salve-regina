@@ -115,8 +115,8 @@ public class GeniusPayPasserelle implements PasserellePaiementPort {
             customer.put("country", "CI");
             bodyMap.put("customer", customer);
 
-            bodyMap.put("success_url", cleanBaseUrl + "/cotisations");
-            bodyMap.put("error_url", cleanBaseUrl + "/accueil");
+            bodyMap.put("success_url", cleanBaseUrl + "/cotisations?ref=" + versement.getReference());
+            bodyMap.put("error_url", cleanBaseUrl + "/accueil?ref=" + versement.getReference());
 
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("reference_versement", versement.getReference());

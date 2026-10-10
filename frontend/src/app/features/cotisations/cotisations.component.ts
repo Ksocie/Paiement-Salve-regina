@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { VersementService } from '../../core/services/versement.service';
 import { Pupitre, Versement } from '../../core/models/versement.model';
 import { ReceiptModalComponent } from '../../shared/components/receipt-modal/receipt-modal.component';
@@ -93,7 +93,7 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
               <div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
                 <span class="px-1.5 py-0.2 rounded bg-surface-container text-[10px] font-bold">{{ v.pupitreLibelle || v.pupitre }}</span>
                 <span>•</span>
-                <span class="text-[11px] font-semibold text-secondary">{{ v.motifLibelle || v.motif }}</span>
+                <span class="text-[11px] font-semibold text-secondary truncate">{{ v.campagne || (v.motifLibelle || v.motif) + ' (' + (v.annee || 2026) + ')' }}</span>
               </div>
             </div>
           </div>
@@ -101,9 +101,13 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
           <div class="flex flex-col items-end shrink-0 pl-2">
             <span class="font-bold text-sm text-primary">{{ v.montant | number }} F</span>
             <span
-              [ngClass]="v.statut === 'VALIDE' ? 'text-emerald-700 bg-emerald-50' : 'text-amber-700 bg-amber-50'"
+              [ngClass]="{
+                'text-emerald-700 bg-emerald-50': v.statut === 'VALIDE',
+                'text-rose-700 bg-rose-50': v.statut === 'ANNULE',
+                'text-amber-700 bg-amber-50': v.statut === 'EN_ATTENTE'
+              }"
               class="text-[10px] font-bold px-1.5 py-0.5 rounded-full mt-0.5">
-              {{ v.statutLibelle || v.statut }}
+              {{ v.statut === 'ANNULE' ? 'ANNULÉ' : (v.statutLibelle || v.statut) }}
             </span>
           </div>
         </div>
@@ -113,13 +117,14 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
       <app-receipt-modal
         *ngIf="recuSelectionne"
         [versement]="recuSelectionne"
-        (fermer)="recuSelectionne = null">
+        (fermer)="fermerRecu()">
       </app-receipt-modal>
     </div>
   `
 })
 export class CotisationsComponent implements OnInit {
   private readonly versementService = inject(VersementService);
+  private readonly route = inject(ActivatedRoute);
 
   versements: Versement[] = [];
   versementsFiltres: Versement[] = [];
@@ -151,6 +156,15 @@ export class CotisationsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    const qp = this.route.snapshot.queryParams;
+    const ref = qp['reference'] || qp['ref'] || qp['order_id'] || qp['versementRef'] || qp['simulated_ref'];
+    if (ref) {
+      this.versementService.obtenirParReference(ref).subscribe({
+        next: (v) => {
+          if (v) this.recuSelectionne = v;
+        }
+      });
+    }
     this.chargerDonnees();
   }
 
@@ -197,5 +211,10 @@ export class CotisationsComponent implements OnInit {
 
   afficherRecu(v: Versement): void {
     this.recuSelectionne = v;
+  }
+
+  fermerRecu(): void {
+    this.recuSelectionne = null;
+    this.chargerDonnees();
   }
 }

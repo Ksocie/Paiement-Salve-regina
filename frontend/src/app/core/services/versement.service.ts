@@ -56,11 +56,32 @@ export class VersementService {
     return this.http.get<Versement>(`${this.apiUrl}/${reference}`);
   }
 
-  listerVersements(pupitre?: string, motif?: string, statut?: string): Observable<Versement[]> {
+  private readonly campagnesApiUrl = (typeof window !== 'undefined' && window.location.port === '4200')
+    ? 'http://localhost:8082/api/campagnes'
+    : '/api/campagnes';
+
+  listerCampagnes(tous = false): Observable<import('../models/versement.model').CampagneMotif[]> {
+    const params = new HttpParams().set('tous', tous);
+    return this.http.get<import('../models/versement.model').CampagneMotif[]>(this.campagnesApiUrl, { params }).pipe(
+      catchError(() => of([]))
+    );
+  }
+
+  listerVersements(
+    pupitre?: string,
+    motif?: string,
+    statut?: string,
+    annee?: number,
+    dateDebut?: string,
+    dateFin?: string
+  ): Observable<Versement[]> {
     let params = new HttpParams();
     if (pupitre && pupitre !== 'TOUS') params = params.set('pupitre', pupitre);
     if (motif && motif !== 'TOUS') params = params.set('motif', motif);
     if (statut && statut !== 'TOUS') params = params.set('statut', statut);
+    if (annee) params = params.set('annee', annee.toString());
+    if (dateDebut) params = params.set('dateDebut', dateDebut);
+    if (dateFin) params = params.set('dateFin', dateFin);
 
     const headers = new HttpHeaders({
       'X-Tresorerie-PIN': this.obtenirPin() || ''

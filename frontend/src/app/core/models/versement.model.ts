@@ -6,6 +6,16 @@ export type OperateurPaiement = 'WAVE' | 'ORANGE_MONEY' | 'MTN_MOMO' | 'MOOV_MON
 
 export type StatutVersement = 'EN_ATTENTE' | 'VALIDE' | 'ECHOUE' | 'ANNULE';
 
+export interface CampagneMotif {
+  id: number;
+  code: string;
+  typeMotif: MotifVersement;
+  libelle: string;
+  annee: number;
+  actif: boolean;
+  ordre: number;
+}
+
 export interface Versement {
   id: number;
   reference: string;
@@ -16,6 +26,8 @@ export interface Versement {
   pupitreLibelle: string;
   motif: MotifVersement;
   motifLibelle: string;
+  annee: number;
+  campagne?: string;
   montant: number;
   operateur: OperateurPaiement;
   operateurLibelle: string;
@@ -34,6 +46,8 @@ export interface CreerVersementDto {
   email?: string;
   pupitre: Pupitre;
   motif: MotifVersement;
+  annee?: number;
+  campagne?: string;
   montant: number;
   operateur: OperateurPaiement;
   commentaire?: string;

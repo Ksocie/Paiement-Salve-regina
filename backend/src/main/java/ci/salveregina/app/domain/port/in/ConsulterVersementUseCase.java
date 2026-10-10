@@ -18,5 +18,7 @@ public interface ConsulterVersementUseCase {
 
     List<Versement> listerVersements(Pupitre pupitre, MotifVersement motif, StatutVersement statut);
 
+    List<Versement> listerVersements(Pupitre pupitre, MotifVersement motif, StatutVersement statut, Integer annee, java.time.Instant dateDebut, java.time.Instant dateFin);
+
     StatistiquesVersement obtenirStatistiques();
 }
