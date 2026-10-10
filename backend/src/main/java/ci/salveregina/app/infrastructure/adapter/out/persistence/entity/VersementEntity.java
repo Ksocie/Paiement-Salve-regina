@@ -68,7 +68,7 @@ public class VersementEntity {
     @Column(nullable = false, length = 30)
     private MotifVersement motif;
 
-    @Column(name = "annee", nullable = false)
+    @Column(name = "annee")
     @Builder.Default
     private Integer annee = 2026;
 
@@ -100,4 +100,8 @@ public class VersementEntity {
 
     @Column(length = 500)
     private String commentaire;
+
+    public Integer getAnnee() {
+        return annee != null ? annee : 2026;
+    }
 }

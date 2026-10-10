@@ -26,9 +26,9 @@ public interface VersementJpaRepository extends JpaRepository<VersementEntity, L
         WHERE (:pupitre IS NULL OR v.pupitre = :pupitre)
           AND (:motif IS NULL OR v.motif = :motif)
           AND (:statut IS NULL OR v.statut = :statut)
-          AND (:annee IS NULL OR v.annee = :annee)
-          AND (CAST(:dateDebut AS timestamp) IS NULL OR v.dateCreation >= :dateDebut)
-          AND (CAST(:dateFin AS timestamp) IS NULL OR v.dateCreation <= :dateFin)
+          AND (:annee IS NULL OR COALESCE(v.annee, 2026) = :annee)
+          AND (:dateDebut IS NULL OR v.dateCreation >= :dateDebut)
+          AND (:dateFin IS NULL OR v.dateCreation <= :dateFin)
         ORDER BY v.dateCreation DESC
     """)
     List<VersementEntity> rechercher(
@@ -40,7 +40,8 @@ public interface VersementJpaRepository extends JpaRepository<VersementEntity, L
             @Param("dateFin") java.time.Instant dateFin
     );
 
-    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true)
+    @org.springframework.transaction.annotation.Transactional
     @Query("UPDATE VersementEntity v SET v.statut = ci.salveregina.app.domain.model.StatutVersement.ANNULE WHERE v.statut = ci.salveregina.app.domain.model.StatutVersement.EN_ATTENTE AND v.dateCreation < :expirationLimit")
     int annulerVersementsExpires(@Param("expirationLimit") java.time.Instant expirationLimit);
 
