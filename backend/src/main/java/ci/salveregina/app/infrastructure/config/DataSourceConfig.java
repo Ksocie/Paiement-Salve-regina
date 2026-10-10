@@ -1,0 +1,83 @@
+package ci.salveregina.app.infrastructure.config;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+
+import javax.sql.DataSource;
+import java.net.URI;
+
+@Configuration
+public class DataSourceConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(DataSourceConfig.class);
+
+    @Value("${spring.datasource.url}")
+    private String rawUrl;
+
+    @Value("${spring.datasource.username:}")
+    private String username;
+
+    @Value("${spring.datasource.password:}")
+    private String password;
+
+    @Value("${spring.datasource.driver-class-name:org.postgresql.Driver}")
+    private String driverClassName;
+
+    @Bean
+    @Primary
+    public DataSource dataSource() {
+        HikariConfig config = new HikariConfig();
+
+        String finalJdbcUrl = rawUrl != null ? rawUrl.trim() : "";
+        String finalUsername = username != null ? username.trim() : "";
+        String finalPassword = password != null ? password.trim() : "";
+
+        // Support direct pour les formats d'URL cloud (Render, Heroku, Neon, Supabase)
+        // Format injecté par le cloud: postgresql://user:password@host:port/database
+        // Format attendu par le driver JDBC Java: jdbc:postgresql://host:port/database
+        if (finalJdbcUrl.startsWith("postgresql://") || finalJdbcUrl.startsWith("postgres://")) {
+            try {
+                URI uri = new URI(finalJdbcUrl);
+                String host = uri.getHost();
+                int port = uri.getPort() == -1 ? 5432 : uri.getPort();
+                String path = uri.getPath();
+                String dbName = (path != null && path.length() > 1) ? path.substring(1) : "";
+
+                finalJdbcUrl = "jdbc:postgresql://" + host + ":" + port + "/" + dbName;
+
+                if (uri.getUserInfo() != null && !uri.getUserInfo().isBlank()) {
+                    String[] userParts = uri.getUserInfo().split(":", 2);
+                    if (userParts.length > 0 && finalUsername.isBlank()) {
+                        finalUsername = userParts[0];
+                    }
+                    if (userParts.length > 1 && finalPassword.isBlank()) {
+                        finalPassword = userParts[1];
+                    }
+                }
+                log.info("URL Cloud Render détectée et convertie en JDBC: {}", finalJdbcUrl);
+            } catch (Exception e) {
+                log.warn("Conversion URL cloud échouée ({}), ajout du préfixe jdbc:", e.getMessage());
+                if (!finalJdbcUrl.startsWith("jdbc:")) {
+                    finalJdbcUrl = "jdbc:" + finalJdbcUrl;
+                }
+            }
+        }
+
+        config.setJdbcUrl(finalJdbcUrl);
+        if (!finalUsername.isBlank()) {
+            config.setUsername(finalUsername);
+        }
+        if (!finalPassword.isBlank()) {
+            config.setPassword(finalPassword);
+        }
+        config.setDriverClassName(driverClassName);
+
+        return new HikariDataSource(config);
+    }
+}
