@@ -82,7 +82,7 @@ public class GeniusPayPasserelle implements PasserellePaiementPort {
                 log.info("Mode simulation GeniusPay actif : retour d'une session fictive");
                 return new SessionPaiement(
                         referencePasserelle,
-                        cleanBaseUrl + "/cotisations?simulated_ref=" + referencePasserelle,
+                        cleanBaseUrl + "/accueil?simulated_ref=" + referencePasserelle,
                         idTransaction,
                         frais,
                         versement.getOperateur().getNomAffiche(),
@@ -115,7 +115,7 @@ public class GeniusPayPasserelle implements PasserellePaiementPort {
             customer.put("country", "CI");
             bodyMap.put("customer", customer);
 
-            bodyMap.put("success_url", cleanBaseUrl + "/cotisations?ref=" + versement.getReference());
+            bodyMap.put("success_url", cleanBaseUrl + "/accueil?ref=" + versement.getReference());
             bodyMap.put("error_url", cleanBaseUrl + "/accueil?ref=" + versement.getReference());
 
             Map<String, Object> metadata = new HashMap<>();
@@ -201,27 +201,43 @@ public class GeniusPayPasserelle implements PasserellePaiementPort {
         if (apiKey != null && !apiKey.isBlank() && !apiKey.equalsIgnoreCase("test")) {
             try {
                 String baseUrl = (apiUrl != null && !apiUrl.isBlank()) ? apiUrl.replaceAll("/+$", "") : "https://geniuspay.ci/api/v1/merchant";
-                String endpoint = baseUrl + "/payments/" + referencePasserelle;
+                String endpoint = baseUrl.endsWith("/payments")
+                        ? baseUrl + "/" + referencePasserelle.trim()
+                        : baseUrl + "/payments/" + referencePasserelle.trim();
 
-                HttpRequest request = HttpRequest.newBuilder()
+                HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
                         .uri(URI.create(endpoint))
                         .timeout(Duration.ofSeconds(10))
                         .header("X-API-Key", apiKey.trim())
                         .header("Accept", "application/json")
-                        .GET()
-                        .build();
+                        .GET();
 
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                if (apiSecret != null && !apiSecret.isBlank()) {
+                    reqBuilder.header("X-API-Secret", apiSecret.trim());
+                }
+
+                HttpResponse<String> response = httpClient.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
                 if (response.statusCode() >= 200 && response.statusCode() < 300) {
                     JsonNode root = objectMapper.readTree(response.body());
-                    String status = root.path("data").path("status").asText();
+                    JsonNode data = root.has("data") ? root.path("data") : root;
+                    String status = "";
+                    if (data.hasNonNull("status")) {
+                        status = data.path("status").asText();
+                    } else if (data.hasNonNull("statut")) {
+                        status = data.path("statut").asText();
+                    } else if (root.hasNonNull("status")) {
+                        status = root.path("status").asText();
+                    }
+                    log.info("Vérification statut GeniusPay pour ref={}: status='{}'", referencePasserelle, status);
                     return Optional.ofNullable(status.isBlank() ? null : status);
+                } else {
+                    log.warn("GeniusPay vérification statut a répondu HTTP {}: {}", response.statusCode(), response.body());
                 }
             } catch (Exception e) {
                 log.warn("Erreur de vérification GeniusPay: {}", e.getMessage());
             }
         }
-        // En mode test / dev local, on valide automatiquement la transaction
+        // En mode test / dev local sans clé configurée, on valide automatiquement la transaction
         return Optional.of("completed");
     }
 

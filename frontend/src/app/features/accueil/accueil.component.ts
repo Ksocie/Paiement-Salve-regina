@@ -268,7 +268,7 @@ import { TresorerieModalComponent } from '../tresorerie/tresorerie-modal.compone
       <app-receipt-modal
         *ngIf="recuAffiche"
         [versement]="recuAffiche"
-        (fermer)="recuAffiche = null">
+        (fermer)="fermerRecu()">
       </app-receipt-modal>
 
       <!-- Espace Trésorerie Modal -->
@@ -292,15 +292,69 @@ export class AccueilComponent implements OnInit {
   numeroInvalide = false;
 
   ngOnInit(): void {
-    const qp = this.route.snapshot.queryParams;
-    const ref = qp['reference'] || qp['ref'] || qp['order_id'] || qp['versementRef'] || qp['simulated_ref'];
-    if (ref) {
-      this.versementService.obtenirParReference(ref).subscribe({
+    this.verifierReferenceEtAfficherRecu();
+    this.route.queryParams.subscribe(() => {
+      this.verifierReferenceEtAfficherRecu();
+    });
+  }
+
+  private verifierReferenceEtAfficherRecu(): void {
+    let refTrouvee: string | null = null;
+
+    // 1. Extraction directe par motif CSR-AAAA-XXXXXX dans l'URL
+    if (typeof window !== 'undefined' && window.location?.href) {
+      const urlMatch = window.location.href.match(/CSR-\d{4}-\d+/i);
+      if (urlMatch) {
+        refTrouvee = urlMatch[0];
+      }
+    }
+
+    // 2. Extraction via les queryParams
+    if (!refTrouvee) {
+      const qp = this.route.snapshot.queryParams;
+      refTrouvee = qp['reference'] || qp['ref'] || qp['order_id'] || qp['versementRef'] || qp['simulated_ref'] || qp['id'] || null;
+      if (refTrouvee) {
+        refTrouvee = refTrouvee.split('?')[0].split('&')[0].trim();
+      }
+    }
+
+    // 3. Fallback localStorage si GeniusPay redirige sans paramètres
+    if (!refTrouvee && typeof window !== 'undefined') {
+      try {
+        const savedRef = localStorage.getItem('salve_dernier_versement_ref');
+        const savedTime = localStorage.getItem('salve_dernier_versement_time');
+        if (savedRef && savedTime) {
+          const ageMinutes = (Date.now() - parseInt(savedTime, 10)) / (1000 * 60);
+          if (ageMinutes < 20) {
+            refTrouvee = savedRef;
+          }
+        }
+      } catch {}
+    }
+
+    if (refTrouvee) {
+      // Vérifie d'abord auprès de GeniusPay via le backend pour mettre à jour le statut immédiatement
+      this.versementService.verifierPaiement(refTrouvee).subscribe({
         next: (v) => {
           if (v) this.recuAffiche = v;
+        },
+        error: () => {
+          this.versementService.obtenirParReference(refTrouvee!).subscribe({
+            next: (v) => {
+              if (v) this.recuAffiche = v;
+            }
+          });
         }
       });
     }
+  }
+
+  fermerRecu(): void {
+    this.recuAffiche = null;
+    try {
+      localStorage.removeItem('salve_dernier_versement_ref');
+      localStorage.removeItem('salve_dernier_versement_time');
+    } catch {}
   }
 
   ouvrirQrModal(): void {
@@ -413,10 +467,15 @@ export class AccueilComponent implements OnInit {
         this.enCours = false;
         this.recuAffiche = res;
 
-        // Si une URL de paiement externe réelle est fournie (ex: Wave direct ou GeniusPay)
+        try {
+          localStorage.setItem('salve_dernier_versement_ref', res.reference);
+          localStorage.setItem('salve_dernier_versement_time', Date.now().toString());
+        } catch {}
+
+        // Redirection directe vers la page de paiement sécurisée (Wave ou GeniusPay)
         if (res.urlPaiement && res.urlPaiement.startsWith('http')) {
           console.log('Session de paiement réelle GeniusPay initialisée:', res.urlPaiement);
-          window.open(res.urlPaiement, '_blank');
+          window.location.href = res.urlPaiement;
         }
       },
       error: (err) => {

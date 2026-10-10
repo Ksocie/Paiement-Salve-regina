@@ -246,16 +246,61 @@ export class CotisationsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const qp = this.route.snapshot.queryParams;
-    const ref = qp['reference'] || qp['ref'] || qp['order_id'] || qp['versementRef'] || qp['simulated_ref'];
-    if (ref) {
-      this.versementService.obtenirParReference(ref).subscribe({
+    this.verifierReferenceEtAfficherRecu();
+    this.route.queryParams.subscribe(() => {
+      this.verifierReferenceEtAfficherRecu();
+    });
+    this.chargerDonnees();
+  }
+
+  private verifierReferenceEtAfficherRecu(): void {
+    let refTrouvee: string | null = null;
+
+    if (typeof window !== 'undefined' && window.location?.href) {
+      const urlMatch = window.location.href.match(/CSR-\d{4}-\d+/i);
+      if (urlMatch) {
+        refTrouvee = urlMatch[0];
+      }
+    }
+
+    if (!refTrouvee) {
+      const qp = this.route.snapshot.queryParams;
+      refTrouvee = qp['reference'] || qp['ref'] || qp['order_id'] || qp['versementRef'] || qp['simulated_ref'] || qp['id'] || null;
+      if (refTrouvee) {
+        refTrouvee = refTrouvee.split('?')[0].split('&')[0].trim();
+      }
+    }
+
+    if (!refTrouvee && typeof window !== 'undefined') {
+      try {
+        const savedRef = localStorage.getItem('salve_dernier_versement_ref');
+        const savedTime = localStorage.getItem('salve_dernier_versement_time');
+        if (savedRef && savedTime) {
+          const ageMinutes = (Date.now() - parseInt(savedTime, 10)) / (1000 * 60);
+          if (ageMinutes < 20) {
+            refTrouvee = savedRef;
+          }
+        }
+      } catch {}
+    }
+
+    if (refTrouvee) {
+      this.versementService.verifierPaiement(refTrouvee).subscribe({
         next: (v) => {
-          if (v) this.recuSelectionne = v;
+          if (v) {
+            this.recuSelectionne = v;
+            this.chargerDonnees();
+          }
+        },
+        error: () => {
+          this.versementService.obtenirParReference(refTrouvee!).subscribe({
+            next: (v) => {
+              if (v) this.recuSelectionne = v;
+            }
+          });
         }
       });
     }
-    this.chargerDonnees();
   }
 
   chargerDonnees(): void {
@@ -367,6 +412,10 @@ export class CotisationsComponent implements OnInit {
 
   fermerRecu(): void {
     this.recuSelectionne = null;
+    try {
+      localStorage.removeItem('salve_dernier_versement_ref');
+      localStorage.removeItem('salve_dernier_versement_time');
+    } catch {}
     this.chargerDonnees();
   }
 }

@@ -115,8 +115,10 @@ public class VersementService implements
     @Override
     @Transactional(readOnly = true)
     public Versement obtenirParReference(String reference) {
-        return persistencePort.trouverParReference(reference)
-                .orElseThrow(() -> new RessourceIntrouvableException("Versement introuvable avec la référence: " + reference));
+        String cleanRef = reference != null ? reference.split("[?&]")[0].trim() : "";
+        return persistencePort.trouverParReference(cleanRef)
+                .or(() -> persistencePort.trouverParReferencePasserelle(cleanRef))
+                .orElseThrow(() -> new RessourceIntrouvableException("Versement introuvable avec la référence: " + cleanRef));
     }
 
     @Override
@@ -201,11 +203,11 @@ public class VersementService implements
 
     private void appliquerMiseAJourStatut(Versement versement, String statutPasserelle) {
         String s = statutPasserelle.toLowerCase().trim();
-        if (s.contains("success") || s.contains("completed") || s.contains("paid") || s.contains("valide")) {
+        if (s.contains("success") || s.contains("completed") || s.contains("paid") || s.contains("valide") || s.contains("succeeded")) {
             versement.marquerCommePaye();
-        } else if (s.contains("fail") || s.contains("declined") || s.contains("echoue")) {
+        } else if (s.contains("fail") || s.contains("declined") || s.contains("echoue") || s.contains("error")) {
             versement.marquerCommeEchoue();
-        } else if (s.contains("cancel") || s.contains("annule")) {
+        } else if (s.contains("cancel") || s.contains("annule") || s.contains("expired")) {
             versement.marquerCommeAnnule();
         }
     }
