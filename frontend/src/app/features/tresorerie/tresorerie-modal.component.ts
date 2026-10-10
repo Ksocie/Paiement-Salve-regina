@@ -21,7 +21,7 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
         <button
           type="button"
           (click)="fermerModal()"
-          class="absolute top-4 right-4 w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface active:scale-90 transition-transform"
+          class="absolute top-4 right-4 w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface active:scale-90 transition-transform z-10"
           title="Fermer et verrouiller">
           <span class="material-symbols-outlined text-[18px]">close</span>
         </button>
@@ -75,21 +75,18 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
         <!-- 2. TABLEAU DE BORD TRÉSORERIE (QUAND CONNECTÉ) -->
         <div *ngIf="connecte" class="flex flex-col gap-4 overflow-y-auto pr-1">
           <!-- Header Dashboard -->
-          <div class="flex items-center justify-between pb-3 border-b border-outline-variant/30">
+          <div class="flex items-center justify-between pb-3 border-b border-outline-variant/30 pr-10">
             <div class="flex items-center gap-2">
               <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
-                <span class="material-symbols-outlined text-[20px]">account_balance</span>
+                <span class="material-symbols-outlined text-[20px]">receipt_long</span>
               </div>
               <div>
-                <h3 class="font-serif-sacred text-xl font-bold text-on-surface">Registre Financier</h3>
-                <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1 w-fit">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Session active (verrouillée dès la sortie)
-                </span>
+                <h3 class="font-serif-sacred text-xl font-bold text-on-surface">Historique des transactions</h3>
               </div>
             </div>
 
-            <div class="flex items-center gap-1.5">
+            <!-- Bouton Changer PIN décalé nettement vers la gauche par rapport à la croix de fermeture -->
+            <div class="flex items-center gap-1.5 mr-2">
               <button
                 type="button"
                 (click)="toggleModeChangerPin()"
@@ -101,10 +98,10 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
           </div>
 
           <!-- Formulaire de Changement de Code PIN -->
-          <div *ngIf="modeChangerPin" class="p-3.5 bg-surface-container-low rounded-xl border border-primary/30 flex flex-col gap-2.5">
+          <div *ngIf="modeChangerPin" class="p-4 bg-surface-container-low rounded-xl border border-primary/30 flex flex-col gap-3 animate-fadeIn">
             <div class="flex items-center gap-1.5 text-xs font-bold text-primary">
               <span class="material-symbols-outlined text-[18px]">key</span>
-              <span>Modifier le code PIN en base de données</span>
+              <span>Modifier le code secret PIN</span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
@@ -160,137 +157,140 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
                 (click)="enregistrerNouveauPin()"
                 class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-on-primary bg-primary hover:bg-primary-container shadow-sm flex items-center gap-1.5 disabled:opacity-50">
                 <span *ngIf="chargementChangementPin" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                <span>Enregistrer en base</span>
+                <span>Enregistrer</span>
               </button>
             </div>
           </div>
 
-          <!-- Total Metrics Card -->
-          <div class="grid grid-cols-2 gap-2">
-            <div class="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 flex flex-col">
-              <span class="text-[11px] text-on-surface-variant font-medium">Total Collecté</span>
-              <span class="text-xl font-extrabold text-primary mt-0.5">
-                {{ (statistiques?.totalCollecte || totalCalcule) | number }} F
-              </span>
-            </div>
-            <div class="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 flex flex-col">
-              <span class="text-[11px] text-on-surface-variant font-medium">Versements Validés</span>
-              <span class="text-xl font-extrabold text-secondary mt-0.5">
-                {{ nbVersementsValides }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Filtres combinés: Motif & Pupitre -->
-          <div class="flex flex-col gap-2.5 bg-surface-container-low/70 p-3 rounded-xl border border-outline-variant/25">
-            <!-- 1. Filtre par motif (extensible automatiquement pour tout futur motif) -->
-            <div class="flex flex-col gap-1.5">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[15px] text-primary">sell</span>
-                  Filtrer par motif
-                </span>
-                <span
-                  *ngIf="motifActif !== 'TOUS'"
-                  (click)="filtrerMotif('TOUS')"
-                  class="text-[10px] text-primary font-semibold cursor-pointer hover:underline">
-                  Tous motifs
+          <!-- CONTENU AFFICHÉ UNIQUEMENT QUAND ON NE MODIFIE PAS LE PIN -->
+          <ng-container *ngIf="!modeChangerPin">
+            <!-- Total Metrics Card -->
+            <div class="grid grid-cols-2 gap-2">
+              <div class="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 flex flex-col">
+                <span class="text-[11px] text-on-surface-variant font-medium">Total Collecté</span>
+                <span class="text-xl font-extrabold text-primary mt-0.5">
+                  {{ (statistiques?.totalCollecte || totalCalcule) | number }} F
                 </span>
               </div>
-              <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                <button
-                  type="button"
-                  (click)="filtrerMotif('TOUS')"
-                  [ngClass]="motifActif === 'TOUS' ? 'bg-primary text-on-primary font-bold shadow-sm' : 'bg-surface-container text-on-surface-variant font-medium hover:bg-surface-container-high'"
-                  class="px-2.5 py-1 rounded-full text-xs shrink-0 transition-all">
-                  Tous les motifs
-                </button>
-                <button
-                  *ngFor="let m of motifsDisponibles"
-                  type="button"
-                  (click)="filtrerMotif(m.code)"
-                  [ngClass]="motifActif === m.code ? 'bg-primary text-on-primary font-bold shadow-sm' : 'bg-surface-container text-on-surface-variant font-medium hover:bg-surface-container-high'"
-                  class="px-2.5 py-1 rounded-full text-xs shrink-0 transition-all">
-                  {{ m.libelle }}
-                </button>
-              </div>
-            </div>
-
-            <!-- 2. Filtre par pupitre -->
-            <div class="flex flex-col gap-1.5 pt-2 border-t border-outline-variant/20">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[15px] text-secondary">group</span>
-                  Filtrer par pupitre
-                </span>
-                <span
-                  *ngIf="pupitreActif !== 'TOUS'"
-                  (click)="filtrerPupitre('TOUS')"
-                  class="text-[10px] text-secondary font-semibold cursor-pointer hover:underline">
-                  Tous pupitres
+              <div class="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 flex flex-col">
+                <span class="text-[11px] text-on-surface-variant font-medium">Versements Validés</span>
+                <span class="text-xl font-extrabold text-secondary mt-0.5">
+                  {{ nbVersementsValides }}
                 </span>
               </div>
-              <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                <button
-                  type="button"
-                  (click)="filtrerPupitre('TOUS')"
-                  [ngClass]="pupitreActif === 'TOUS' ? 'bg-secondary text-on-secondary font-bold shadow-sm' : 'bg-surface-container text-on-surface-variant font-medium hover:bg-surface-container-high'"
-                  class="px-2.5 py-1 rounded-full text-xs shrink-0 transition-all">
-                  Tous ({{ versements.length }})
-                </button>
-                <button
-                  *ngFor="let p of pupitres"
-                  type="button"
-                  (click)="filtrerPupitre(p)"
-                  [ngClass]="pupitreActif === p ? 'bg-secondary text-on-secondary font-bold shadow-sm' : 'bg-surface-container text-on-surface-variant font-medium hover:bg-surface-container-high'"
-                  class="px-2.5 py-1 rounded-full text-xs shrink-0 transition-all">
-                  {{ p }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- List of Versements -->
-          <div class="flex flex-col gap-2">
-            <div class="flex justify-between items-center text-xs text-on-surface-variant font-bold px-1">
-              <span>Choriste, Pupitre &amp; Motif</span>
-              <span>Montant &amp; Reçu</span>
             </div>
 
-            <div *ngIf="versementsFiltres.length === 0" class="py-8 text-center text-xs text-on-surface-variant">
-              Aucun versement trouvé pour ce filtre.
-            </div>
-
-            <div
-              *ngFor="let v of versementsFiltres"
-              (click)="recuSelectionne = v"
-              class="bg-surface-container-lowest rounded-xl p-3 shadow-sm border border-outline-variant/30 flex items-center justify-between hover:bg-surface-container-low cursor-pointer transition-all">
-              <div class="flex items-center gap-2.5 min-w-0">
-                <div class="w-8 h-8 rounded-full bg-primary-fixed/50 text-primary flex items-center justify-center font-bold text-xs shrink-0">
-                  {{ v.nomDonateur ? v.nomDonateur.charAt(0).toUpperCase() : 'C' }}
+            <!-- Filtres combinés: Motif & Pupitre -->
+            <div class="flex flex-col gap-2.5 bg-surface-container-low/70 p-3 rounded-xl border border-outline-variant/25">
+              <!-- 1. Filtre par motif (extensible automatiquement pour tout futur motif) -->
+              <div class="flex flex-col gap-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[15px] text-primary">sell</span>
+                    Filtrer par motif
+                  </span>
+                  <span
+                    *ngIf="motifActif !== 'TOUS'"
+                    (click)="filtrerMotif('TOUS')"
+                    class="text-[10px] text-primary font-semibold cursor-pointer hover:underline">
+                    Tous motifs
+                  </span>
                 </div>
-                <div class="flex flex-col min-w-0">
-                  <span class="font-semibold text-xs text-on-surface truncate">{{ v.nomDonateur }}</span>
-                  <div class="flex items-center gap-1.5 text-[10px] text-on-surface-variant">
-                    <span class="font-bold text-primary">{{ v.pupitreLibelle || v.pupitre }}</span>
-                    <span>•</span>
-                    <span class="font-semibold text-secondary">{{ v.motifLibelle || v.motif }}</span>
-                    <span>•</span>
-                    <span>{{ v.telephone }}</span>
+                <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  <button
+                    type="button"
+                    (click)="filtrerMotif('TOUS')"
+                    [ngClass]="motifActif === 'TOUS' ? 'bg-primary text-on-primary font-bold shadow-sm' : 'bg-surface-container text-on-surface-variant font-medium hover:bg-surface-container-high'"
+                    class="px-2.5 py-1 rounded-full text-xs shrink-0 transition-all">
+                    Tous les motifs
+                  </button>
+                  <button
+                    *ngFor="let m of motifsDisponibles"
+                    type="button"
+                    (click)="filtrerMotif(m.code)"
+                    [ngClass]="motifActif === m.code ? 'bg-primary text-on-primary font-bold shadow-sm' : 'bg-surface-container text-on-surface-variant font-medium hover:bg-surface-container-high'"
+                    class="px-2.5 py-1 rounded-full text-xs shrink-0 transition-all">
+                    {{ m.libelle }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- 2. Filtre par pupitre -->
+              <div class="flex flex-col gap-1.5 pt-2 border-t border-outline-variant/20">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[15px] text-secondary">group</span>
+                    Filtrer par pupitre
+                  </span>
+                  <span
+                    *ngIf="pupitreActif !== 'TOUS'"
+                    (click)="filtrerPupitre('TOUS')"
+                    class="text-[10px] text-secondary font-semibold cursor-pointer hover:underline">
+                    Tous pupitres
+                  </span>
+                </div>
+                <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  <button
+                    type="button"
+                    (click)="filtrerPupitre('TOUS')"
+                    [ngClass]="pupitreActif === 'TOUS' ? 'bg-secondary text-on-secondary font-bold shadow-sm' : 'bg-surface-container text-on-surface-variant font-medium hover:bg-surface-container-high'"
+                    class="px-2.5 py-1 rounded-full text-xs shrink-0 transition-all">
+                    Tous ({{ versements.length }})
+                  </button>
+                  <button
+                    *ngFor="let p of pupitres"
+                    type="button"
+                    (click)="filtrerPupitre(p)"
+                    [ngClass]="pupitreActif === p ? 'bg-secondary text-on-secondary font-bold shadow-sm' : 'bg-surface-container text-on-surface-variant font-medium hover:bg-surface-container-high'"
+                    class="px-2.5 py-1 rounded-full text-xs shrink-0 transition-all">
+                    {{ p }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- List of Versements -->
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between items-center text-xs text-on-surface-variant font-bold px-1">
+                <span>Choriste, Pupitre &amp; Motif</span>
+                <span>Montant &amp; Reçu</span>
+              </div>
+
+              <div *ngIf="versementsFiltres.length === 0" class="py-8 text-center text-xs text-on-surface-variant">
+                Aucun versement trouvé pour ce filtre.
+              </div>
+
+              <div
+                *ngFor="let v of versementsFiltres"
+                (click)="recuSelectionne = v"
+                class="bg-surface-container-lowest rounded-xl p-3 shadow-sm border border-outline-variant/30 flex items-center justify-between hover:bg-surface-container-low cursor-pointer transition-all">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="w-8 h-8 rounded-full bg-primary-fixed/50 text-primary flex items-center justify-center font-bold text-xs shrink-0">
+                    {{ v.nomDonateur ? v.nomDonateur.charAt(0).toUpperCase() : 'C' }}
+                  </div>
+                  <div class="flex flex-col min-w-0">
+                    <span class="font-semibold text-xs text-on-surface truncate">{{ v.nomDonateur }}</span>
+                    <div class="flex items-center gap-1.5 text-[10px] text-on-surface-variant">
+                      <span class="font-bold text-primary">{{ v.pupitreLibelle || v.pupitre }}</span>
+                      <span>•</span>
+                      <span class="font-semibold text-secondary">{{ v.motifLibelle || v.motif }}</span>
+                      <span>•</span>
+                      <span>{{ v.telephone }}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div class="flex flex-col items-end shrink-0 pl-2">
-                <span class="font-bold text-xs text-primary">{{ v.montant | number }} F</span>
-                <span
-                  [ngClass]="v.statut === 'VALIDE' ? 'text-emerald-700 bg-emerald-50' : 'text-amber-800 bg-amber-50'"
-                  class="text-[9px] font-bold px-1.5 py-0.2 rounded-full mt-0.5">
-                  {{ v.statutLibelle || v.statut }}
-                </span>
+                <div class="flex flex-col items-end shrink-0 pl-2">
+                  <span class="font-bold text-xs text-primary">{{ v.montant | number }} F</span>
+                  <span
+                    [ngClass]="v.statut === 'VALIDE' ? 'text-emerald-700 bg-emerald-50' : 'text-amber-800 bg-amber-50'"
+                    class="text-[9px] font-bold px-1.5 py-0.2 rounded-full mt-0.5">
+                    {{ v.statutLibelle || v.statut }}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          </ng-container>
         </div>
 
         <!-- Reçu modal viewer for trésorier -->
@@ -508,7 +508,7 @@ export class TresorerieModalComponent implements OnInit, OnDestroy {
         this.chargementChangementPin = false;
         if (res.succes) {
           this.versementService.enregistrerPin(nouv);
-          this.messagePinSucces = 'Code PIN modifié en base de données avec succès !';
+          this.messagePinSucces = 'Code PIN modifié avec succès !';
           setTimeout(() => {
             this.modeChangerPin = false;
             this.messagePinSucces = '';

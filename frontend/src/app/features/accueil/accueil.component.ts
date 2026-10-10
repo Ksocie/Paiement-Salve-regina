@@ -75,23 +75,18 @@ import { TresorerieModalComponent } from '../tresorerie/tresorerie-modal.compone
           <h2 class="font-serif-sacred text-2xl font-bold text-on-surface">Cotisation &amp; Offrande</h2>
         </div>
 
-        <!-- Category Tabs Selector -->
+        <!-- Category Chips Selector -->
         <div class="flex flex-col gap-1.5">
           <label class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Motif du versement</label>
-          <div class="grid grid-cols-2 gap-2 p-1 bg-surface-container rounded-xl">
+          <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             <button
+              *ngFor="let m of motifs"
               type="button"
-              (click)="selectionnerMotif('COTISATION')"
-              [ngClass]="motifSelectionne === 'COTISATION' ? 'bg-secondary text-on-secondary shadow-sm font-bold' : 'text-on-surface-variant font-medium hover:bg-surface-container-low'"
-              class="py-2.5 px-2 rounded-lg text-xs text-center transition-all truncate">
-              Cotisation
-            </button>
-            <button
-              type="button"
-              (click)="selectionnerMotif('DON_LIBRE')"
-              [ngClass]="motifSelectionne === 'DON_LIBRE' ? 'bg-secondary text-on-secondary shadow-sm font-bold' : 'text-on-surface-variant font-medium hover:bg-surface-container-low'"
-              class="py-2.5 px-2 rounded-lg text-xs text-center transition-all truncate">
-              Don Libre
+              (click)="selectionnerMotif(m.valeur)"
+              [ngClass]="motifSelectionne === m.valeur ? 'bg-secondary text-on-secondary shadow-sm font-bold' : 'bg-surface-container text-on-surface-variant font-medium hover:bg-surface-container-high'"
+              class="py-2 px-3 rounded-full text-xs text-center transition-all shrink-0 active:scale-95 flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[16px]">{{ m.icon }}</span>
+              <span>{{ m.libelle }}</span>
             </button>
           </div>
         </div>
@@ -272,6 +267,15 @@ export class AccueilComponent {
   montantPersonnalise = false;
   montantLibre = 15000;
   operateurSelectionne: OperateurPaiement = 'WAVE';
+
+  readonly motifs: { valeur: MotifVersement; libelle: string; icon: string }[] = [
+    { valeur: 'COTISATION', libelle: 'Cotisation', icon: 'payments' },
+    { valeur: 'DON_LIBRE', libelle: 'Don Libre', icon: 'volunteer_activism' },
+    { valeur: 'CONCERT', libelle: 'Concert', icon: 'music_note' },
+    { valeur: 'UNIFORME', libelle: 'Uniforme & Tenue', icon: 'checkroom' },
+    { valeur: 'PROJET', libelle: 'Projet Spécial', icon: 'campaign' },
+    { valeur: 'AUTRE', libelle: 'Autre', icon: 'more_horiz' }
+  ];
 
   readonly pupitres: { valeur: Pupitre; libelle: string }[] = [
     { valeur: 'SOPRANO', libelle: 'Soprano' },
