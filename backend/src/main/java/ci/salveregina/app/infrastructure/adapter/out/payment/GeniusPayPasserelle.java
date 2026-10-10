@@ -39,6 +39,7 @@ public class GeniusPayPasserelle implements PasserellePaiementPort {
     private final String webhookSecret;
     private final String apiUrl;
     private final String mode;
+    private final String appBaseUrl;
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
 
@@ -48,7 +49,8 @@ public class GeniusPayPasserelle implements PasserellePaiementPort {
             @Value("${geniuspay.api-secret:}") String apiSecret,
             @Value("${geniuspay.webhook-secret:}") String webhookSecret,
             @Value("${geniuspay.api-url:https://geniuspay.ci/api/v1/merchant}") String apiUrl,
-            @Value("${geniuspay.mode:sandbox}") String mode,
+            @Value("${geniuspay.mode:live}") String mode,
+            @Value("${app.base-url:https://salve-regina-pwa.onrender.com}") String appBaseUrl,
             ObjectMapper objectMapper
     ) {
         this.signatureValidator = signatureValidator;
@@ -57,6 +59,7 @@ public class GeniusPayPasserelle implements PasserellePaiementPort {
         this.webhookSecret = webhookSecret;
         this.apiUrl = apiUrl;
         this.mode = mode;
+        this.appBaseUrl = appBaseUrl;
         this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
@@ -71,104 +74,111 @@ public class GeniusPayPasserelle implements PasserellePaiementPort {
         String idTransaction = String.valueOf(System.currentTimeMillis());
         BigDecimal montant = versement.getMontant();
         BigDecimal frais = montant.multiply(BigDecimal.valueOf(0.02)).setScale(0, RoundingMode.HALF_UP);
-        String checkoutUrl = "https://geniuspay.ci/checkout/" + referencePasserelle;
+        String cleanBaseUrl = (appBaseUrl != null && !appBaseUrl.isBlank()) ? appBaseUrl.replaceAll("/+$", "") : "https://salve-regina-pwa.onrender.com";
 
-        // 1. Tenter l'appel officiel GeniusPay si la clé API est fournie
-        if (apiKey != null && !apiKey.isBlank() && !apiKey.equalsIgnoreCase("test")) {
-            try {
-                String baseUrl = (apiUrl != null && !apiUrl.isBlank()) ? apiUrl.replaceAll("/+$", "") : "https://geniuspay.ci/api/v1/merchant";
-                String endpoint = baseUrl.endsWith("/payments") ? baseUrl : baseUrl + "/payments";
-
-                Map<String, Object> bodyMap = new HashMap<>();
-                bodyMap.put("amount", montant.intValue());
-                bodyMap.put("currency", "XOF");
-                bodyMap.put("description", String.format("Salve Regina - %s (%s - %s)",
-                        versement.getNomDonateur(),
-                        versement.getMotif().getLibelle(),
-                        versement.getPupitre().getLibelle()));
-
-                String telephoneFormate = formaterTelephone(versement.getTelephone());
-                Map<String, Object> customer = new HashMap<>();
-                customer.put("name", versement.getNomDonateur());
-                customer.put("phone", telephoneFormate);
-                customer.put("email", (versement.getEmail() != null && !versement.getEmail().isBlank()) ? versement.getEmail() : "donateur@salveregina.ci");
-                customer.put("country", "CI");
-                bodyMap.put("customer", customer);
-
-                bodyMap.put("success_url", "http://localhost:4200/cotisations");
-                bodyMap.put("error_url", "http://localhost:4200/accueil");
-
-                Map<String, Object> metadata = new HashMap<>();
-                metadata.put("reference_versement", versement.getReference());
-                metadata.put("pupitre", versement.getPupitre().name());
-                metadata.put("motif", versement.getMotif().name());
-                bodyMap.put("metadata", metadata);
-
-                // Paramétrage de la méthode de paiement sélectionnée
-                appliquerMethodePaiement(bodyMap, versement.getOperateur());
-
-                String jsonPayload = objectMapper.writeValueAsString(bodyMap);
-
-                HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
-                        .uri(URI.create(endpoint))
-                        .timeout(Duration.ofSeconds(15))
-                        .header("X-API-Key", apiKey.trim())
-                        .header("Accept", "application/json")
-                        .header("Content-Type", "application/json");
-
-                if (apiSecret != null && !apiSecret.isBlank()) {
-                    reqBuilder.header("X-API-Secret", apiSecret.trim());
-                }
-
-                HttpRequest request = reqBuilder
-                        .POST(HttpRequest.BodyPublishers.ofString(jsonPayload, StandardCharsets.UTF_8))
-                        .build();
-
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-                if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                    JsonNode root = objectMapper.readTree(response.body());
-                    JsonNode data = root.path("data");
-                    if (!data.isMissingNode() && !data.isNull()) {
-                        if (data.hasNonNull("reference")) {
-                            referencePasserelle = data.path("reference").asText();
-                        }
-                        if (data.hasNonNull("id")) {
-                            idTransaction = data.path("id").asText();
-                        }
-                        if (data.hasNonNull("payment_url")) {
-                            checkoutUrl = data.path("payment_url").asText();
-                        } else if (data.hasNonNull("checkout_url")) {
-                            checkoutUrl = data.path("checkout_url").asText();
-                        }
-                        if (data.hasNonNull("fees")) {
-                            frais = BigDecimal.valueOf(data.path("fees").asDouble()).setScale(0, RoundingMode.HALF_UP);
-                        }
-                    }
-                    log.info("GeniusPay Session créée avec succès: ref={}, url={}", referencePasserelle, checkoutUrl);
-                    return new SessionPaiement(referencePasserelle, checkoutUrl, idTransaction, frais, versement.getOperateur().getNomAffiche(), "INITIATED");
-                } else {
-                    log.warn("GeniusPay a répondu HTTP {}: {}", response.statusCode(), response.body());
-                    String msgErreur = extraireMessageErreur(response.body());
-                    throw new ci.salveregina.app.domain.exception.PaiementException(msgErreur);
-                }
-            } catch (ci.salveregina.app.domain.exception.PaiementException pe) {
-                throw pe;
-            } catch (Exception e) {
-                log.error("Erreur de communication avec GeniusPay: {}", e.getMessage(), e);
-                throw new ci.salveregina.app.domain.exception.PaiementException("Erreur de connexion à GeniusPay : " + e.getMessage());
+        // 1. Vérifier la configuration GeniusPay
+        if (apiKey == null || apiKey.isBlank() || apiKey.equalsIgnoreCase("test")) {
+            if ("simulation".equalsIgnoreCase(mode) || "mock".equalsIgnoreCase(mode)) {
+                log.info("Mode simulation GeniusPay actif : retour d'une session fictive");
+                return new SessionPaiement(
+                        referencePasserelle,
+                        cleanBaseUrl + "/cotisations?simulated_ref=" + referencePasserelle,
+                        idTransaction,
+                        frais,
+                        versement.getOperateur().getNomAffiche(),
+                        "PENDING"
+                );
             }
+            log.warn("Tentative d'initiation de paiement GeniusPay sans GENIUSPAY_API_KEY configurée sur Render");
+            throw new ci.salveregina.app.domain.exception.PaiementException(
+                    "La passerelle GeniusPay n'est pas encore configurée sur le serveur. Veuillez renseigner GENIUSPAY_API_KEY et GENIUSPAY_API_SECRET dans les variables d'environnement de Render."
+            );
         }
 
-        // Mode Sandbox / Simulation
-        return new SessionPaiement(
-                referencePasserelle,
-                checkoutUrl,
-                idTransaction,
-                frais,
-                versement.getOperateur().getNomAffiche(),
-                "PENDING"
-        );
+        try {
+            String baseUrl = (apiUrl != null && !apiUrl.isBlank()) ? apiUrl.replaceAll("/+$", "") : "https://geniuspay.ci/api/v1/merchant";
+            String endpoint = baseUrl.endsWith("/payments") ? baseUrl : baseUrl + "/payments";
+
+            Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put("amount", montant.intValue());
+            bodyMap.put("currency", "XOF");
+            bodyMap.put("description", String.format("Salve Regina - %s (%s - %s)",
+                    versement.getNomDonateur(),
+                    versement.getMotif().getLibelle(),
+                    versement.getPupitre().getLibelle()));
+
+            String telephoneFormate = formaterTelephone(versement.getTelephone());
+            Map<String, Object> customer = new HashMap<>();
+            customer.put("name", versement.getNomDonateur());
+            customer.put("phone", telephoneFormate);
+            customer.put("email", (versement.getEmail() != null && !versement.getEmail().isBlank()) ? versement.getEmail() : "donateur@salveregina.ci");
+            customer.put("country", "CI");
+            bodyMap.put("customer", customer);
+
+            bodyMap.put("success_url", cleanBaseUrl + "/cotisations");
+            bodyMap.put("error_url", cleanBaseUrl + "/accueil");
+
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("reference_versement", versement.getReference());
+            metadata.put("pupitre", versement.getPupitre().name());
+            metadata.put("motif", versement.getMotif().name());
+            bodyMap.put("metadata", metadata);
+
+            // Paramétrage de la méthode de paiement sélectionnée
+            appliquerMethodePaiement(bodyMap, versement.getOperateur());
+
+            String jsonPayload = objectMapper.writeValueAsString(bodyMap);
+
+            HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create(endpoint))
+                    .timeout(Duration.ofSeconds(15))
+                    .header("X-API-Key", apiKey.trim())
+                    .header("Accept", "application/json")
+                    .header("Content-Type", "application/json");
+
+            if (apiSecret != null && !apiSecret.isBlank()) {
+                reqBuilder.header("X-API-Secret", apiSecret.trim());
+            }
+
+            HttpRequest request = reqBuilder
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                JsonNode root = objectMapper.readTree(response.body());
+                JsonNode data = root.path("data");
+                String checkoutUrl = "";
+                if (!data.isMissingNode() && !data.isNull()) {
+                    if (data.hasNonNull("reference")) {
+                        referencePasserelle = data.path("reference").asText();
+                    }
+                    if (data.hasNonNull("id")) {
+                        idTransaction = data.path("id").asText();
+                    }
+                    if (data.hasNonNull("payment_url")) {
+                        checkoutUrl = data.path("payment_url").asText();
+                    } else if (data.hasNonNull("checkout_url")) {
+                        checkoutUrl = data.path("checkout_url").asText();
+                    }
+                    if (data.hasNonNull("fees")) {
+                        frais = BigDecimal.valueOf(data.path("fees").asDouble()).setScale(0, RoundingMode.HALF_UP);
+                    }
+                }
+                log.info("GeniusPay Session créée avec succès: ref={}, url={}", referencePasserelle, checkoutUrl);
+                return new SessionPaiement(referencePasserelle, checkoutUrl, idTransaction, frais, versement.getOperateur().getNomAffiche(), "INITIATED");
+            } else {
+                log.warn("GeniusPay a répondu HTTP {}: {}", response.statusCode(), response.body());
+                String msgErreur = extraireMessageErreur(response.body());
+                throw new ci.salveregina.app.domain.exception.PaiementException(msgErreur);
+            }
+        } catch (ci.salveregina.app.domain.exception.PaiementException pe) {
+            throw pe;
+        } catch (Exception e) {
+            log.error("Erreur de communication avec GeniusPay: {}", e.getMessage(), e);
+            throw new ci.salveregina.app.domain.exception.PaiementException("Erreur de connexion à GeniusPay : " + e.getMessage());
+        }
     }
 
     private void appliquerMethodePaiement(Map<String, Object> bodyMap, OperateurPaiement operateur) {

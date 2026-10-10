@@ -39,6 +39,7 @@ geniuspay:
   webhook-secret: ${GENIUSPAY_WEBHOOK_SECRET:}
 
 app:
+  base-url: ${APP_BASE_URL:https://salve-regina-pwa.onrender.com}
   tresorerie:
     pin: ${APP_TRESORERIE_PIN:202620}
   cors:
