@@ -5,6 +5,7 @@ build/
 **/build/
 !src/**/build/
 *.jar
+!**/gradle-wrapper.jar
 *.war
 *.class
 *.log
