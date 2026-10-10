@@ -30,15 +30,22 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# 4. Commit et Push Git vers GitHub (Déclenchement Render)
-Write-Host "`n[4/4] Envoi vers GitHub pour déploiement Render..." -ForegroundColor Yellow
+# 4. Commit et Push Git vers GitHub
+$currentBranch = (git branch --show-current).Trim()
+Write-Host "`n[4/4] Envoi vers GitHub sur la branche '$currentBranch'..." -ForegroundColor Yellow
 Set-Location -Path "$PSScriptRoot"
 git add -A
 git commit -m "$Message"
-git push origin main
+git push origin $currentBranch
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Erreur lors du push Git." -ForegroundColor Red
     exit 1
 }
 
-Write-Host "`nSucces ! Les modifications sont en ligne sur GitHub et en cours de deploiement sur Render." -ForegroundColor Green
+Write-Host "`nSucces ! Les modifications sont en ligne sur GitHub (branche '$currentBranch')." -ForegroundColor Green
+if ($currentBranch -eq "main") {
+    Write-Host "Render est en cours de deploiement en production !" -ForegroundColor Cyan
+} else {
+    Write-Host "Pour deployer en production sur Render, executez : .\deploy-prod.ps1" -ForegroundColor Cyan
+}
+
