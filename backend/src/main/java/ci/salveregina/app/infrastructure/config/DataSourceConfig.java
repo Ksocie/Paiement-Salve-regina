@@ -40,10 +40,15 @@ public class DataSourceConfig {
 
         // Support direct pour les formats d'URL cloud (Render, Heroku, Neon, Supabase)
         // Format injecté par le cloud: postgresql://user:password@host:port/database
+        // ou format jdbc avec credentials: jdbc:postgresql://user:password@host:port/database
         // Format attendu par le driver JDBC Java: jdbc:postgresql://host:port/database
-        if (finalJdbcUrl.startsWith("postgresql://") || finalJdbcUrl.startsWith("postgres://")) {
+        boolean isCloudUrl = finalJdbcUrl.startsWith("postgresql://") || finalJdbcUrl.startsWith("postgres://");
+        boolean isJdbcWithCredentials = finalJdbcUrl.startsWith("jdbc:postgresql://") && finalJdbcUrl.contains("@");
+
+        if (isCloudUrl || isJdbcWithCredentials) {
             try {
-                URI uri = new URI(finalJdbcUrl);
+                String urlToParse = isJdbcWithCredentials ? finalJdbcUrl.substring(5) : finalJdbcUrl;
+                URI uri = new URI(urlToParse);
                 String host = uri.getHost();
                 int port = uri.getPort() == -1 ? 5432 : uri.getPort();
                 String path = uri.getPath();
@@ -54,14 +59,14 @@ public class DataSourceConfig {
 
                 if (uri.getUserInfo() != null && !uri.getUserInfo().isBlank()) {
                     String[] userParts = uri.getUserInfo().split(":", 2);
-                    if (userParts.length > 0 && finalUsername.isBlank()) {
-                        finalUsername = userParts[0];
+                    if (userParts.length > 0 && !userParts[0].isBlank()) {
+                        finalUsername = java.net.URLDecoder.decode(userParts[0], java.nio.charset.StandardCharsets.UTF_8);
                     }
-                    if (userParts.length > 1 && finalPassword.isBlank()) {
-                        finalPassword = userParts[1];
+                    if (userParts.length > 1 && !userParts[1].isBlank()) {
+                        finalPassword = java.net.URLDecoder.decode(userParts[1], java.nio.charset.StandardCharsets.UTF_8);
                     }
                 }
-                log.info("URL Cloud Render détectée et convertie en JDBC: {}", finalJdbcUrl);
+                log.info("URL Cloud détectée et convertie en JDBC: {} (utilisateur: {})", finalJdbcUrl, finalUsername);
             } catch (Exception e) {
                 log.warn("Conversion URL cloud échouée ({}), ajout du préfixe jdbc:", e.getMessage());
                 if (!finalJdbcUrl.startsWith("jdbc:")) {

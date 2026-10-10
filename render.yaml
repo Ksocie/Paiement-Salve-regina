@@ -8,17 +8,7 @@ services:
     region: frankfurt
     envVars:
       - key: SPRING_DATASOURCE_URL
-        fromDatabase:
-          name: salveregina-postgres
-          property: connectionString
-      - key: SPRING_DATASOURCE_USERNAME
-        fromDatabase:
-          name: salveregina-postgres
-          property: user
-      - key: SPRING_DATASOURCE_PASSWORD
-        fromDatabase:
-          name: salveregina-postgres
-          property: password
+        sync: false
       - key: GENIUSPAY_MODE
         value: live
       - key: GENIUSPAY_API_KEY
@@ -27,10 +17,3 @@ services:
         sync: false
       - key: GENIUSPAY_WEBHOOK_SECRET
         sync: false
-
-databases:
-  - name: salveregina-postgres
-    databaseName: salveregina_db
-    user: salveregina
-    plan: free
-    region: frankfurt
