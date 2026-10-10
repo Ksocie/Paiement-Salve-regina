@@ -48,8 +48,9 @@ public class DataSourceConfig {
                 int port = uri.getPort() == -1 ? 5432 : uri.getPort();
                 String path = uri.getPath();
                 String dbName = (path != null && path.length() > 1) ? path.substring(1) : "";
+                String query = (uri.getQuery() != null && !uri.getQuery().isBlank()) ? "?" + uri.getQuery() : "";
 
-                finalJdbcUrl = "jdbc:postgresql://" + host + ":" + port + "/" + dbName;
+                finalJdbcUrl = "jdbc:postgresql://" + host + ":" + port + "/" + dbName + query;
 
                 if (uri.getUserInfo() != null && !uri.getUserInfo().isBlank()) {
                     String[] userParts = uri.getUserInfo().split(":", 2);
