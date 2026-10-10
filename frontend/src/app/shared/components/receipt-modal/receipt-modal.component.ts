@@ -99,7 +99,7 @@ import { VersementService } from '../../../core/services/versement.service';
             target="_blank"
             class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-secondary to-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md hover:opacity-95 active:scale-95 transition-all text-center">
             <span class="material-symbols-outlined text-[18px]">open_in_new</span>
-            Payer directement sur Mobile Money (Wave / GeniusPay)
+            Payer directement par Mobile Money (Wave, Orange, MTN)
           </a>
 
           <div class="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-amber-50 text-amber-800 text-xs font-semibold border border-amber-200">

@@ -23,9 +23,14 @@ public class DataInitializer implements CommandLineRunner {
             jdbcTemplate.execute("ALTER TABLE versements ADD COLUMN IF NOT EXISTS annee integer DEFAULT 2026");
             jdbcTemplate.execute("ALTER TABLE versements ADD COLUMN IF NOT EXISTS campagne varchar(120)");
             jdbcTemplate.execute("UPDATE versements SET annee = 2026 WHERE annee IS NULL");
-            log.info("Migration des colonnes versements (annee, campagne) vérifiée avec succès.");
+            // Nettoyage immédiat des anciennes transactions de test
+            int supprimes = jdbcTemplate.update("DELETE FROM versements WHERE telephone = '0700000000' OR nom_donateur ILIKE '%test%' OR date_creation < '2026-10-10 06:15:00'");
+            if (supprimes > 0) {
+                log.info("Période de test terminée: {} versement(s) de test supprimé(s).", supprimes);
+            }
+            log.info("Migration des colonnes versements vérifiée avec succès.");
         } catch (Exception e) {
-            log.warn("Note sur la migration des colonnes (déjà appliquées ou table inexistante): {}", e.getMessage());
+            log.warn("Note sur l'initialisation des données: {}", e.getMessage());
         }
         log.info("Démarrage du système sans injection de données statiques. Prêt pour les transactions réelles.");
     }

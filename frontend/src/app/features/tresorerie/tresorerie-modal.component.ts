@@ -408,9 +408,8 @@ export class TresorerieModalComponent implements OnInit, OnDestroy {
   campagnes: CampagneMotif[] = [];
 
   // Filtres
-  dateDebut = new Date().toISOString().substring(0, 10);
-  dateFin = new Date().toISOString().substring(0, 10);
-  anneeActive: number | 'TOUTES' = 2026;
+  dateDebut = '';
+  dateFin = '';
   pupitreActif = 'TOUS';
   motifActif = 'TOUS';
 
@@ -426,14 +425,6 @@ export class TresorerieModalComponent implements OnInit, OnDestroy {
     { code: 'PROJET', libelle: 'Projet Spécial' },
     { code: 'AUTRE', libelle: 'Autre' }
   ];
-
-  get anneesDisponibles(): number[] {
-    const annees = new Set<number>([2026, 2025]);
-    this.versements.forEach(v => {
-      if (v.annee) annees.add(v.annee);
-    });
-    return Array.from(annees).sort((a, b) => b - a);
-  }
 
   get motifsDisponibles(): { code: string; libelle: string }[] {
     const map = new Map<string, string>();
@@ -542,11 +533,6 @@ export class TresorerieModalComponent implements OnInit, OnDestroy {
     this.chargerDonnees();
   }
 
-  filtrerAnnee(annee: number | 'TOUTES'): void {
-    this.anneeActive = annee;
-    this.appliquerFiltre();
-  }
-
   filtrerPupitre(p: string): void {
     this.pupitreActif = p;
     this.appliquerFiltre();
@@ -614,7 +600,6 @@ export class TresorerieModalComponent implements OnInit, OnDestroy {
     this.versementsFiltres = [];
     this.pupitreActif = 'TOUS';
     this.motifActif = 'TOUS';
-    this.anneeActive = 2026;
   }
 
   toggleModeChangerPin(): void {

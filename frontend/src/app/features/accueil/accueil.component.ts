@@ -143,17 +143,27 @@ import { TresorerieModalComponent } from '../tresorerie/tresorerie-modal.compone
 
         <!-- Phone Number Mobile Money Input -->
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-semibold text-on-surface" for="donor-phone">Numéro Mobile Money (Wave, Orange, MTN)</label>
-          <div class="flex items-center gap-2 bg-surface-container-low rounded-xl px-3 py-2 border border-transparent focus-within:border-primary focus-within:bg-surface-container-lowest transition-all">
+          <label class="text-xs font-semibold text-on-surface flex items-center justify-between" for="donor-phone">
+            <span>Numéro Mobile Money <strong class="text-rose-600 font-bold">* (Obligatoire)</strong></span>
+            <span class="text-[10px] text-on-surface-variant">Wave, Orange, MTN, Moov</span>
+          </label>
+          <div class="flex items-center gap-2 bg-surface-container-low rounded-xl px-3 py-2 border transition-all"
+               [ngClass]="numeroInvalide ? 'border-rose-500 bg-rose-50/30' : 'border-transparent focus-within:border-primary focus-within:bg-surface-container-lowest'">
             <span class="text-xs font-bold text-on-surface-variant shrink-0">+225</span>
             <input
               id="donor-phone"
               [(ngModel)]="telephone"
+              (input)="numeroInvalide = false"
               inputmode="numeric"
-              placeholder="07 00 00 00 00"
+              placeholder="Ex: 07 00 00 00 00"
               type="tel"
+              required
               class="w-full bg-transparent text-sm text-on-surface placeholder:text-outline focus:outline-none min-w-0">
           </div>
+          <span *ngIf="numeroInvalide" class="text-[11px] text-rose-600 font-semibold flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">error</span>
+            Le numéro de téléphone est obligatoire pour valider votre versement.
+          </span>
         </div>
 
         <!-- Amount Selection Pills -->
@@ -241,7 +251,7 @@ import { TresorerieModalComponent } from '../tresorerie/tresorerie-modal.compone
 
         <p class="text-[11px] text-center text-on-surface-variant flex items-center justify-center gap-1">
           <span class="material-symbols-outlined text-[14px] text-emerald-600">verified_user</span>
-          Paiement sécurisé • Passerelle GeniusPay
+          Paiement sécurisé • Mobile Money (Wave, Orange, MTN, Moov)
         </p>
       </section>
 
@@ -282,6 +292,7 @@ export class AccueilComponent implements OnInit {
   enCours = false;
   afficherTresorerieModal = false;
   recuAffiche: Versement | null = null;
+  numeroInvalide = false;
 
   ngOnInit(): void {
     const qp = this.route.snapshot.queryParams;
@@ -370,7 +381,15 @@ export class AccueilComponent implements OnInit {
 
   validerOffrande(): void {
     const nom = this.nomDonateur.trim() || 'Bienfaiteur Anonyme';
-    const tel = this.telephone.trim() || '0700000000';
+    const tel = (this.telephone || '').trim().replace(/\s+/g, '');
+
+    if (!tel || tel.length < 8) {
+      this.numeroInvalide = true;
+      alert('Le numéro de téléphone Mobile Money est obligatoire pour effectuer le versement.');
+      return;
+    }
+    this.numeroInvalide = false;
+
     const montantFinal = this.montantPersonnalise ? (this.montantLibre || 1000) : this.montant;
 
     if (montantFinal < 200) {

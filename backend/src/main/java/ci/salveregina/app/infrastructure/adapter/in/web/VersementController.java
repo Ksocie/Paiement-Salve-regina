@@ -39,17 +39,33 @@ public class VersementController {
     private final ConsulterVersementUseCase consulterUseCase;
     private final SynchroniserPaiementUseCase synchroniserUseCase;
     private final TresorerieSecuriteService tresorerieSecuriteService;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     public VersementController(
             EnregistrerVersementUseCase enregistrerUseCase,
             ConsulterVersementUseCase consulterUseCase,
             SynchroniserPaiementUseCase synchroniserUseCase,
-            TresorerieSecuriteService tresorerieSecuriteService
+            TresorerieSecuriteService tresorerieSecuriteService,
+            org.springframework.jdbc.core.JdbcTemplate jdbcTemplate
     ) {
         this.enregistrerUseCase = enregistrerUseCase;
         this.consulterUseCase = consulterUseCase;
         this.synchroniserUseCase = synchroniserUseCase;
         this.tresorerieSecuriteService = tresorerieSecuriteService;
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    @Operation(summary = "Purger les transactions de test (Réservé au Bureau avec code PIN)")
+    @PostMapping("/tresorerie/purger-tests")
+    public ResponseEntity<Map<String, Object>> purgerVersementsTests(
+            @RequestHeader(value = "X-Tresorerie-PIN", required = false) String pin
+    ) {
+        if (!estPinValide(pin)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("erreur", "Accès refusé", "message", "Code PIN de trésorerie requis"));
+        }
+        int supprimes = jdbcTemplate.update("DELETE FROM versements WHERE telephone = '0700000000' OR nom_donateur ILIKE '%test%' OR date_creation < '2026-10-10 06:15:00'");
+        return ResponseEntity.ok(Map.of("succes", true, "message", supprimes + " versements de test purgés avec succès."));
     }
 
     @Operation(summary = "Vérifier le code PIN de l'espace Trésorerie", description = "Valide le code PIN secret (stocké en base de données) pour accéder aux listes financières.")
