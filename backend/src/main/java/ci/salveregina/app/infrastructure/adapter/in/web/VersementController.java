@@ -89,10 +89,9 @@ public class VersementController {
         return ResponseEntity.ok(VersementDto.depuisDomaine(versement));
     }
 
-    @Operation(summary = "Lister les versements (Réservé au Bureau avec code PIN)")
+    @Operation(summary = "Lister les versements (Registre public des cotisations et dons)")
     @GetMapping
     public ResponseEntity<?> listerVersements(
-            @RequestHeader(value = "X-Tresorerie-PIN", required = false) String pin,
             @RequestParam(required = false) Pupitre pupitre,
             @RequestParam(required = false) MotifVersement motif,
             @RequestParam(required = false) StatutVersement statut,
@@ -100,10 +99,6 @@ public class VersementController {
             @RequestParam(required = false) String dateDebut,
             @RequestParam(required = false) String dateFin
     ) {
-        if (!estPinValide(pin)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("erreur", "Accès refusé", "message", "Code PIN de trésorerie requis"));
-        }
         java.time.Instant debutInstant = null;
         java.time.Instant finInstant = null;
         if (dateDebut != null && !dateDebut.isBlank()) {

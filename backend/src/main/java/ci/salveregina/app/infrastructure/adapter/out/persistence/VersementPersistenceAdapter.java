@@ -55,7 +55,18 @@ public class VersementPersistenceAdapter implements VersementPersistencePort {
 
     @Override
     public List<Versement> rechercher(Pupitre pupitre, MotifVersement motif, StatutVersement statut, Integer annee, java.time.Instant dateDebut, java.time.Instant dateFin) {
-        return repository.rechercher(pupitre, motif, statut, annee, dateDebut, dateFin)
+        org.springframework.data.jpa.domain.Specification<VersementEntity> spec = (root, query, cb) -> {
+            java.util.List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+            if (pupitre != null) predicates.add(cb.equal(root.get("pupitre"), pupitre));
+            if (motif != null) predicates.add(cb.equal(root.get("motif"), motif));
+            if (statut != null) predicates.add(cb.equal(root.get("statut"), statut));
+            if (annee != null) predicates.add(cb.equal(cb.coalesce(root.get("annee"), 2026), annee));
+            if (dateDebut != null) predicates.add(cb.greaterThanOrEqualTo(root.get("dateCreation"), dateDebut));
+            if (dateFin != null) predicates.add(cb.lessThanOrEqualTo(root.get("dateCreation"), dateFin));
+            return predicates.isEmpty() ? cb.conjunction() : cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+
+        return repository.findAll(spec, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "dateCreation"))
                 .stream()
                 .map(this::versDomaine)
                 .toList();

@@ -60,9 +60,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProblemDetail> handleGeneralException(Exception ex) {
         log.error("Erreur serveur imprévue: {}", ex.getMessage(), ex);
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "Une erreur inattendue est survenue.");
+        String detailMessage = ex.getMessage() != null ? ex.getMessage() : "Une erreur inattendue est survenue.";
+        if (ex.getCause() != null && ex.getCause().getMessage() != null) {
+            detailMessage += " (Cause: " + ex.getCause().getMessage() + ")";
+        }
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, detailMessage);
         problem.setTitle("Erreur Interne");
         problem.setType(URI.create("urn:problem:internal-server-error"));
+        problem.setProperty("exceptionClass", ex.getClass().getName());
         problem.setProperty("timestamp", Instant.now());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problem);
     }
