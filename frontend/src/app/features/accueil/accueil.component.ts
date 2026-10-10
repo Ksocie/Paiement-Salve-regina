@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { PwaService } from '../../core/services/pwa.service';
 import { VersementService } from '../../core/services/versement.service';
 import { CreerVersementDto, MotifVersement, OperateurPaiement, Pupitre, Versement } from '../../core/models/versement.model';
+import { QrModalService } from '../../core/services/qr-modal.service';
 import { ReceiptModalComponent } from '../../shared/components/receipt-modal/receipt-modal.component';
 import { TresorerieModalComponent } from '../tresorerie/tresorerie-modal.component';
 
@@ -63,6 +64,26 @@ import { TresorerieModalComponent } from '../tresorerie/tresorerie-modal.compone
             Celui qui chante bien prie deux fois • St Augustin
           </span>
         </div>
+      </section>
+
+      <!-- Bannière Partager & QR Code -->
+      <section class="mx-margin mb-space-md p-3.5 rounded-2xl bg-gradient-to-r from-secondary-fixed/50 to-primary-fixed/30 border border-secondary/20 shadow-sm flex items-center justify-between gap-2">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-full bg-secondary text-on-secondary flex items-center justify-center shrink-0 shadow-sm">
+            <span class="material-symbols-outlined text-[22px]">qr_code_2</span>
+          </div>
+          <div class="flex flex-col min-w-0">
+            <span class="text-xs font-bold text-on-secondary-fixed truncate">Faire scanner ou partager l'application</span>
+            <span class="text-[11px] text-on-secondary-fixed-variant truncate">QR Code direct pour les cotisations &amp; dons</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="ouvrirQrModal()"
+          class="px-3 py-1.5 rounded-xl bg-secondary text-on-secondary hover:bg-secondary/90 text-xs font-semibold shadow-sm active:scale-95 transition-all flex items-center gap-1.5 shrink-0">
+          <span class="material-symbols-outlined text-[16px]">qr_code</span>
+          <span>Afficher</span>
+        </button>
       </section>
 
       <!-- Guichet de Cotisation & Offrande -->
@@ -253,11 +274,16 @@ import { TresorerieModalComponent } from '../tresorerie/tresorerie-modal.compone
 export class AccueilComponent {
   readonly pwaService = inject(PwaService);
   private readonly versementService = inject(VersementService);
+  private readonly qrModalService = inject(QrModalService);
 
   showPwaBanner = true;
   enCours = false;
   afficherTresorerieModal = false;
   recuAffiche: Versement | null = null;
+
+  ouvrirQrModal(): void {
+    this.qrModalService.open();
+  }
 
   motifSelectionne: MotifVersement = 'COTISATION';
   pupitreSelectionne: Pupitre = 'SOPRANO';

@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PwaService } from '../../core/services/pwa.service';
+import { QrModalService } from '../../core/services/qr-modal.service';
 
 @Component({
   selector: 'app-header',
@@ -24,12 +25,23 @@ import { PwaService } from '../../core/services/pwa.service';
         <div class="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
+            aria-label="Afficher le QR code pour partager"
+            (click)="ouvrirQrModal()"
+            class="min-h-[38px] px-2.5 sm:px-3 flex items-center gap-1.5 rounded-full text-secondary hover:bg-surface-container active:scale-95 transition-all bg-secondary-fixed/40 border border-secondary/20 text-xs font-semibold"
+            title="Afficher et faire scanner le QR code">
+            <span class="material-symbols-outlined text-[20px]">qr_code_2</span>
+            <span>QR Code</span>
+          </button>
+
+          <button
+            type="button"
             aria-label="Installer l'application PWA"
             (click)="installerPwa()"
-            class="min-h-[40px] px-3 flex items-center gap-1.5 rounded-full text-primary hover:bg-surface-container active:scale-95 transition-all bg-primary-fixed/30 border border-primary/20 text-xs font-semibold"
+            class="min-h-[38px] px-2.5 sm:px-3 flex items-center gap-1.5 rounded-full text-primary hover:bg-surface-container active:scale-95 transition-all bg-primary-fixed/30 border border-primary/20 text-xs font-semibold"
             title="Installer sur mon smartphone ou bureau">
             <span class="material-symbols-outlined text-[20px]">install_mobile</span>
-            <span>Installer l'App</span>
+            <span class="hidden sm:inline">Installer l'App</span>
+            <span class="sm:hidden">Installer</span>
           </button>
         </div>
       </div>
@@ -38,6 +50,11 @@ import { PwaService } from '../../core/services/pwa.service';
 })
 export class HeaderComponent {
   private readonly pwaService = inject(PwaService);
+  private readonly qrModalService = inject(QrModalService);
+
+  ouvrirQrModal(): void {
+    this.qrModalService.open();
+  }
 
   installerPwa(): void {
     this.pwaService.installApp();

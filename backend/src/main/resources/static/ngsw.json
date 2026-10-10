@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1791601080356,
+  "timestamp": 1791607444133,
   "index": "/index.html",
   "assetGroups": [
     {
@@ -13,10 +13,10 @@
       "urls": [
         "/favicon.ico",
         "/index.html",
-        "/main-YH2HLAOM.js",
+        "/main-V54OAYLL.js",
         "/manifest.webmanifest",
         "/polyfills-5CFQRCPP.js",
-        "/styles-V4L6Q7WN.css"
+        "/styles-B4HZ7TKM.css"
       ],
       "patterns": []
     },
@@ -36,7 +36,8 @@
         "/icons/icon-512x512.png",
         "/icons/icon-72x72.png",
         "/icons/icon-96x96.png",
-        "/images/chorale-salve-regina.jpg"
+        "/images/chorale-salve-regina.jpg",
+        "/images/qrcode-salve-regina.png"
       ],
       "patterns": []
     }
@@ -53,11 +54,12 @@
     "/icons/icon-72x72.png": "aa88a6096bd973be7f6d7a5489bfa6bc2463f8c4",
     "/icons/icon-96x96.png": "7fb8f59c30ce2ff12c700321a0b39e14b3dc8f95",
     "/images/chorale-salve-regina.jpg": "b62fbfa66c3fc0ebf3da9e41c7c446c44e92f97c",
-    "/index.html": "b17d5b94d6cd78522e7d84422960fe7d35a126f5",
-    "/main-YH2HLAOM.js": "0c95c57a73d2897f01ff96496da961c7e5fba887",
+    "/images/qrcode-salve-regina.png": "5305d639eb5cf7f8d8b69ed837d536b49222b1bc",
+    "/index.html": "4405dd9bbbbeb85b229bbc7d86fc35badd2953eb",
+    "/main-V54OAYLL.js": "cd5fa2a24478a000f68d577529c252f6fa2d9354",
     "/manifest.webmanifest": "a958aa587504f371040c8884552796ddda623875",
     "/polyfills-5CFQRCPP.js": "f2241e9a25858f895ce299d15f6f22e849e2fd72",
-    "/styles-V4L6Q7WN.css": "dc6a92dd84113e00a36561aa977a9898b0243e56"
+    "/styles-B4HZ7TKM.css": "1c687524900ffbe9c98d446e6a033ba50318d09a"
   },
   "navigationUrls": [
     {
