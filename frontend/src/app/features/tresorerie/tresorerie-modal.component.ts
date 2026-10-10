@@ -220,9 +220,9 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
 
               <div class="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 flex flex-col justify-between">
                 <div>
-                  <span class="text-[11px] text-on-surface-variant font-medium">Versements Validés</span>
+                  <span class="text-[11px] text-on-surface-variant font-medium">Versements Encaissés</span>
                   <div class="text-xl font-extrabold text-secondary mt-0.5">
-                    {{ nbVersementsValidesFiltres }} / {{ versementsFiltres.length }}
+                    {{ versementsFiltres.length }}
                   </div>
                 </div>
                 <span class="text-[10px] text-emerald-700 font-semibold mt-1 flex items-center gap-0.5">
@@ -358,10 +358,9 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
 
                 <div class="flex flex-col items-end shrink-0 pl-2">
                   <span class="font-bold text-xs text-primary">{{ v.montant | number }} F</span>
-                  <span
-                    [ngClass]="v.statut === 'VALIDE' ? 'text-emerald-700 bg-emerald-50' : (v.statut === 'ANNULE' ? 'text-red-700 bg-red-50' : 'text-amber-800 bg-amber-50')"
-                    class="text-[9px] font-bold px-1.5 py-0.2 rounded-full mt-0.5">
-                    {{ v.statut === 'VALIDE' ? 'VALIDÉ' : (v.statut === 'ANNULE' ? 'ANNULÉ' : 'EN ATTENTE') }}
+                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5 text-emerald-700 bg-emerald-50 flex items-center gap-0.5">
+                    <span class="material-symbols-outlined text-[10px]">verified</span>
+                    ENCAISSÉ
                   </span>
                 </div>
               </div>
@@ -501,17 +500,17 @@ export class TresorerieModalComponent implements OnInit, OnDestroy {
       next: (c) => this.campagnes = c
     });
 
-    // Charger les versements selon la date par défaut
+    // Charger les versements validés (uniquement les fonds réellement encaissés)
     this.versementService.listerVersements(
       undefined,
       undefined,
-      undefined,
+      'VALIDE',
       undefined,
       this.dateDebut || undefined,
       this.dateFin || undefined
     ).subscribe({
       next: (data) => {
-        this.versements = data;
+        this.versements = (data || []).filter(v => v.statut === 'VALIDE');
         this.appliquerFiltre();
         this.chargementDonnees = false;
       },

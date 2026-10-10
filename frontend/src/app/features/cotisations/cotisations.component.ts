@@ -81,9 +81,9 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
 
         <div class="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 flex flex-col justify-between">
           <div>
-            <span class="text-[11px] text-on-surface-variant font-medium">Versements Validés</span>
+            <span class="text-[11px] text-on-surface-variant font-medium">Versements Encaissés</span>
             <div class="text-xl font-extrabold text-secondary mt-0.5">
-              {{ nbVersementsValidesFiltres }} / {{ versementsFiltres.length }}
+              {{ versementsFiltres.length }}
             </div>
           </div>
           <span class="text-[10px] text-emerald-700 font-semibold mt-1 flex items-center gap-0.5">
@@ -190,14 +190,9 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
 
           <div class="flex flex-col items-end shrink-0 pl-2">
             <span class="font-bold text-sm text-primary">{{ v.montant | number }} F</span>
-            <span
-              [ngClass]="{
-                'text-emerald-700 bg-emerald-50': v.statut === 'VALIDE',
-                'text-rose-700 bg-rose-50': v.statut === 'ANNULE',
-                'text-amber-700 bg-amber-50': v.statut === 'EN_ATTENTE'
-              }"
-              class="text-[10px] font-bold px-1.5 py-0.5 rounded-full mt-0.5">
-              {{ v.statut === 'ANNULE' ? 'ANNULÉ' : (v.statutLibelle || v.statut) }}
+            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full mt-0.5 text-emerald-700 bg-emerald-50 flex items-center gap-0.5">
+              <span class="material-symbols-outlined text-[12px]">verified</span>
+              VALIDÉ
             </span>
           </div>
         </div>
@@ -263,9 +258,9 @@ export class CotisationsComponent implements OnInit {
 
   chargerDonnees(): void {
     this.chargement = true;
-    this.versementService.listerVersements().subscribe({
+    this.versementService.listerVersements(undefined, undefined, 'VALIDE').subscribe({
       next: (data) => {
-        this.versements = data;
+        this.versements = (data || []).filter(v => v.statut === 'VALIDE');
         this.appliquerFiltre();
         this.chargement = false;
       },
