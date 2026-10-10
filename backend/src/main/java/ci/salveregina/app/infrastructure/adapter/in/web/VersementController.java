@@ -131,6 +131,12 @@ public class VersementController {
             } catch (Exception ignored) {}
         }
 
+        if (debutInstant != null && finInstant != null && debutInstant.isAfter(finInstant)) {
+            java.time.Instant temp = debutInstant;
+            debutInstant = finInstant;
+            finInstant = temp;
+        }
+
         List<VersementDto> list = consulterUseCase.listerVersements(pupitre, motif, statut, annee, debutInstant, finInstant)
                 .stream()
                 .map(VersementDto::depuisDomaine)

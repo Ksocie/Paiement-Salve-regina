@@ -49,7 +49,8 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
             <input
               type="date"
               [(ngModel)]="dateDebut"
-              (change)="onChangementDate()"
+              [max]="dateFin || null"
+              (change)="onChangementDateDebut()"
               class="w-full px-2.5 py-1.5 rounded-xl bg-surface-container-lowest border border-outline-variant/40 focus:border-primary focus:outline-none text-xs text-on-surface font-medium">
           </div>
           <div>
@@ -57,7 +58,8 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
             <input
               type="date"
               [(ngModel)]="dateFin"
-              (change)="onChangementDate()"
+              [min]="dateDebut || null"
+              (change)="onChangementDateFin()"
               class="w-full px-2.5 py-1.5 rounded-xl bg-surface-container-lowest border border-outline-variant/40 focus:border-primary focus:outline-none text-xs text-on-surface font-medium">
           </div>
         </div>
@@ -282,7 +284,17 @@ export class CotisationsComponent implements OnInit {
     this.appliquerFiltre();
   }
 
-  onChangementDate(): void {
+  onChangementDateDebut(): void {
+    if (this.dateDebut && this.dateFin && this.dateDebut > this.dateFin) {
+      this.dateFin = this.dateDebut;
+    }
+    this.appliquerFiltre();
+  }
+
+  onChangementDateFin(): void {
+    if (this.dateDebut && this.dateFin && this.dateFin < this.dateDebut) {
+      this.dateDebut = this.dateFin;
+    }
     this.appliquerFiltre();
   }
 

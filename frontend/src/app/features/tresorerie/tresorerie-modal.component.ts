@@ -188,7 +188,8 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
                   <input
                     type="date"
                     [(ngModel)]="dateDebut"
-                    (change)="onChangementFiltreDate()"
+                    [max]="dateFin || null"
+                    (change)="onChangementDateDebut()"
                     class="w-full px-2.5 py-1.5 rounded-lg bg-surface-container-lowest border border-outline-variant/40 focus:border-primary focus:outline-none text-xs font-medium">
                 </div>
                 <div>
@@ -196,7 +197,8 @@ import { ReceiptModalComponent } from '../../shared/components/receipt-modal/rec
                   <input
                     type="date"
                     [(ngModel)]="dateFin"
-                    (change)="onChangementFiltreDate()"
+                    [min]="dateDebut || null"
+                    (change)="onChangementDateFin()"
                     class="w-full px-2.5 py-1.5 rounded-lg bg-surface-container-lowest border border-outline-variant/40 focus:border-primary focus:outline-none text-xs font-medium">
                 </div>
               </div>
@@ -522,7 +524,17 @@ export class TresorerieModalComponent implements OnInit, OnDestroy {
     });
   }
 
-  onChangementFiltreDate(): void {
+  onChangementDateDebut(): void {
+    if (this.dateDebut && this.dateFin && this.dateDebut > this.dateFin) {
+      this.dateFin = this.dateDebut;
+    }
+    this.chargerDonnees();
+  }
+
+  onChangementDateFin(): void {
+    if (this.dateDebut && this.dateFin && this.dateFin < this.dateDebut) {
+      this.dateDebut = this.dateFin;
+    }
     this.chargerDonnees();
   }
 
